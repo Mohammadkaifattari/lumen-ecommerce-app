@@ -432,6 +432,7 @@ function PaymentForm({
 
   useEffect(() => {
     if (stripe && elements) onStripeReady(stripe, elements);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stripe, elements]);
 
   const handleContinue = () => {

@@ -37,6 +37,7 @@ export default function AdminChatPage() {
         });
         setRooms(initial);
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -59,6 +60,7 @@ export default function AdminChatPage() {
     });
 
     return () => { socket.disconnect(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

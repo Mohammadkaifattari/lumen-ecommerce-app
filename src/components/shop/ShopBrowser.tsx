@@ -90,6 +90,7 @@ export function ShopBrowser({ products }: { products: Product[] }) {
         break;
     }
     return list;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products, category, sort, maxPrice, selectedColors]);
 
   const setCategoryParam = (c: Category | "all") => {

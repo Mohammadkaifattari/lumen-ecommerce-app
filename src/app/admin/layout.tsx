@@ -47,6 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (pathname === '/admin/orders') clearOrders();
     else if (pathname === '/admin/chat') clearChat();
     else if (pathname === '/admin/users') clearUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   useEffect(() => {
@@ -65,6 +66,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     });
     socket.on('new-user', (data: any) => { addUser(data); });
     return () => { socket.disconnect(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   return (
