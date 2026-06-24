@@ -1,5 +1,5 @@
 "use client";
-
+import type { Stripe } from '@stripe/stripe-js';
 import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -61,7 +61,7 @@ export default function CheckoutPage() {
   const { data: session } = useSession();
 
   const stripeElementsRef = useRef<ReturnType<typeof useElements> | null>(null);
-  const stripeRef = useRef<Awaited<ReturnType<typeof stripePromise>> | null>(null);
+  const stripeRef = useRef<Stripe | null>(null);
   const cardNameRef = useRef<string>("");
   const confirmedPaymentIntentRef = useRef<string | null>(null);
 
