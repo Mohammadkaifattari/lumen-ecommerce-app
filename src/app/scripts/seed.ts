@@ -1,12 +1,13 @@
 import { connectDB } from "@/lib/mongodb";
 import { ProductModel } from "@/models/Product";
-import { PRODUCTS } from "@/lib/mockData";
+import { getAllProducts } from "@/lib/data";
+const PRODUCTS = getAllProducts();
 
 async function seed() {
   await connectDB();
   await ProductModel.deleteMany({});
   
-  const docs = PRODUCTS.map((p) => ({
+  const docs = getAllProducts().map((p) => ({
     slug: p.slug,
     name: p.name,
     tagline: p.tagline,

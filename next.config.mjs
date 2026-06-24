@@ -1,5 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    typedRoutes: false,
+  },
+  typescript: {
+    ignoreBuildErrors: false,
+  },
   reactStrictMode: true,
   images: {
     remotePatterns: [
