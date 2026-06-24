@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, User, ArrowRight, Check } from "lucide-react";
 
@@ -17,16 +18,51 @@ export function AuthForm({ mode: initial }: { mode: Mode }) {
   const [mode, setMode] = useState<Mode>(initial);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    // Mock auth latency.
-    setTimeout(() => {
-      setLoading(false);
-      setDone(true);
-      setTimeout(() => router.push("/account"), 900);
-    }, 1100);
+
+    if (mode === "register") {
+      try {
+        const res = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || "Registration failed.");
+          setLoading(false);
+          return;
+        }
+      } catch {
+        setError("Something went wrong. Try again.");
+        setLoading(false);
+        return;
+      }
+    }
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    setLoading(false);
+
+    if (result?.error) {
+      setError(result.error);
+      return;
+    }
+
+    setDone(true);
+    setTimeout(() => router.push("/account"), 900);
   };
 
   const flip = (next: Mode) => setMode(next);
@@ -84,10 +120,35 @@ export function AuthForm({ mode: initial }: { mode: Mode }) {
 
                 <form onSubmit={handleSubmit} className="mt-8 space-y-4">
                   {mode === "register" && (
-                    <InputWithIcon icon={User} label="Full name" placeholder="Alex Rivera" type="text" />
+                    <InputWithIcon
+                      icon={User}
+                      label="Full name"
+                      placeholder="Alex Rivera"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
                   )}
-                  <InputWithIcon icon={Mail} label="Email" placeholder="you@email.com" type="email" />
-                  <InputWithIcon icon={Lock} label="Password" placeholder="••••••••" type="password" />
+                  <InputWithIcon
+                    icon={Mail}
+                    label="Email"
+                    placeholder="you@email.com"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  <InputWithIcon
+                    icon={Lock}
+                    label="Password"
+                    placeholder="••••••••"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+
+                  {error && (
+                    <p className="text-sm text-crimson">{error}</p>
+                  )}
 
                   {mode === "login" && (
                     <div className="flex justify-end">
@@ -125,7 +186,8 @@ export function AuthForm({ mode: initial }: { mode: Mode }) {
 
                 {/* Social */}
                 <button
-                  onClick={handleSubmit}
+                  type="button"
+                  onClick={() => signIn("google")}
                   className="flex w-full items-center justify-center gap-3 rounded-full border border-ink/15 py-3.5 text-sm font-medium transition-colors hover:bg-ink/5 dark:border-paper/20 dark:hover:bg-paper/5"
                 >
                   <GoogleIcon /> Continue with Google

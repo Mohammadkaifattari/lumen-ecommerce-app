@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { io as socketIO } from "socket.io-client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Package, Heart, User as UserIcon, ChevronDown, LogOut, MapPin, CheckCircle2, Truck, Clock,
@@ -22,12 +25,36 @@ const STATUS_META: Record<Order["status"], { icon: React.ComponentType<{ classNa
 };
 
 export default function AccountPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>("orders");
-  const [expanded, setExpanded] = useState<string | null>(MOCK_ORDERS[0]?.id ?? null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [expanded, setExpanded] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const wishlistIds = useWishlist((s) => s.ids);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+    fetch("/api/orders")
+      .then((r) => r.json())
+      .then((data) => {
+        setOrders(data.orders ?? []);
+        setExpanded(data.orders?.[0]?._id ?? null);
+      });
+
+    const socket = socketIO();
+    socket.on("order-status-updated", (data: { orderId: string; status: string }) => {
+      setOrders((prev) =>
+        prev.map((o) => o._id === data.orderId ? { ...o, status: data.status } : o)
+      );
+    });
+    return () => { socket.disconnect(); };
+  }, []);
+  useEffect(() => {
+    if (status === "unauthenticated") router.push("/login");
+  }, [status, router]);
+
+  if (status === "loading" || status === "unauthenticated") return null;
 
   const wishlistProducts = mounted
     ? getAllProducts().filter((p) => wishlistIds.includes(p.id))
@@ -45,12 +72,17 @@ export default function AccountPage() {
       <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow mb-3">Account</p>
-          <h1 className="text-display-lg font-bold tracking-tight">Welcome, Alex.</h1>
-          <p className="mt-2 text-ink-muted dark:text-paper/60">Member since June 2024</p>
+          <h1 className="text-display-lg font-bold tracking-tight">
+            Welcome, {session?.user?.name?.split(" ")[0] ?? "there"}.
+          </h1>
+          <p className="mt-2 text-ink-muted dark:text-paper/60">{session?.user?.email}</p>
         </div>
-        <Link href="/login" className="flex items-center gap-2 text-sm text-ink-muted hover:text-ink dark:text-paper/60 dark:hover:text-paper">
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="flex items-center gap-2 text-sm text-ink-muted hover:text-ink dark:text-paper/60 dark:hover:text-paper"
+        >
           <LogOut className="h-4 w-4" /> Sign out
-        </Link>
+        </button>
       </div>
 
       <div className="grid gap-10 lg:grid-cols-[220px_1fr]">
@@ -91,14 +123,14 @@ export default function AccountPage() {
               transition={{ duration: 0.3 }}
             >
               {tab === "orders" && (
-                <OrdersTab orders={MOCK_ORDERS} expanded={expanded} setExpanded={setExpanded} />
+                <OrdersTab orders={orders} expanded={expanded} setExpanded={setExpanded} />
               )}
 
               {tab === "wishlist" && (
                 <WishlistTab products={wishlistProducts} mounted={mounted} />
               )}
 
-              {tab === "profile" && <ProfileTab />}
+              {tab === "profile" && <ProfileTab session={session} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -112,7 +144,7 @@ function OrdersTab({
   expanded,
   setExpanded,
 }: {
-  orders: Order[];
+  orders: (Order & { _id: string })[];
   expanded: string | null;
   setExpanded: (id: string | null) => void;
 }) {
@@ -121,15 +153,15 @@ function OrdersTab({
       <h2 className="mb-2 text-2xl font-semibold">Order history</h2>
       {orders.map((order) => {
         const StatusIcon = STATUS_META[order.status].icon;
-        const isOpen = expanded === order.id;
+        const isOpen = expanded === order._id;
         return (
           <div
-            key={order.id}
+            key={order._id}
             className="overflow-hidden rounded-2xl border border-ink/10 dark:border-paper/10"
           >
             {/* Row */}
             <button
-              onClick={() => setExpanded(isOpen ? null : order.id)}
+              onClick={() => setExpanded(isOpen ? null : order._id)}
               className="flex w-full items-center justify-between gap-4 p-5 text-left transition-colors hover:bg-ink/[0.02] dark:hover:bg-paper/[0.02]"
             >
               <div className="flex items-center gap-4">
@@ -137,7 +169,7 @@ function OrdersTab({
                   <StatusIcon className={cn("h-5 w-5", STATUS_META[order.status].color)} />
                 </div>
                 <div>
-                  <p className="font-medium">{order.id}</p>
+                  <p className="font-medium">#{order._id.toString().slice(-8).toUpperCase()}</p>
                   <p className="text-sm text-ink-muted dark:text-paper/60">
                     Placed {new Date(order.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} · {order.items.length} item{order.items.length > 1 ? "s" : ""}
                   </p>
@@ -257,15 +289,18 @@ function WishlistTab({
   );
 }
 
-function ProfileTab() {
+function ProfileTab({ session }: { session: any }) {
+  const [firstName, ...lastParts] = (session?.user?.name ?? "").split(" ");
+  const lastName = lastParts.join(" ");
+
   return (
     <div className="max-w-lg">
       <h2 className="mb-6 text-2xl font-semibold">Profile details</h2>
       <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
-        <ProfileField label="First name" defaultValue="Alex" />
-        <ProfileField label="Last name" defaultValue="Rivera" />
-        <ProfileField label="Email" defaultValue="alex.rivera@email.com" type="email" />
-        <ProfileField label="Phone" defaultValue="+1 (555) 014-8829" type="tel" />
+        <ProfileField label="First name" defaultValue={firstName || ""} />
+        <ProfileField label="Last name" defaultValue={lastName || ""} />
+        <ProfileField label="Email" defaultValue={session?.user?.email ?? ""} type="email" />
+        <ProfileField label="Phone" defaultValue="" />
 
         <div className="rounded-xl border border-ink/10 p-5 dark:border-paper/10">
           <p className="mb-2 flex items-center gap-2 font-medium">

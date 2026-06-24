@@ -4,16 +4,19 @@ import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductConfigurator } from "@/components/product/ProductConfigurator";
 import { ReviewsSection } from "@/components/product/ReviewsSection";
 import { ProductRow } from "@/components/home/ProductRow";
+import { RecentlyViewed } from "@/components/product/RecentlyViewed";
+import { ProductViewTracker } from "@/components/product/ProductViewTracker";
 import { Reveal } from "@/components/ui/Reveal";
 import { SplitText } from "@/components/ui/SplitText";
-import { getAllProducts, getProductBySlug, getRelatedProducts } from "@/lib/data";
+import { getAllProducts, getProductBySlug, getRelatedProducts } from "@/lib/products";
 
-export function generateStaticParams() {
-  return getAllProducts().map((p) => ({ slug: p.slug }));
+export async function generateStaticParams() {
+  const products = await getAllProducts();
+  return products.map((p) => ({ slug: p.slug }));
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
-  const product = getProductBySlug(params.slug);
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  const product = await getProductBySlug(params.slug);
   if (!product) return { title: "Product not found" };
   return {
     title: product.name,
@@ -26,11 +29,11 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
   };
 }
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
-  const product = getProductBySlug(params.slug);
+export default async function ProductPage({ params }: { params: { slug: string } }) {
+  const product = await getProductBySlug(params.slug);
   if (!product) notFound();
 
-  const related = getRelatedProducts(product, 4);
+  const related = await getRelatedProducts(product, 4);
 
   // JSON-LD Product schema for rich search results.
   const jsonLd = {
@@ -73,7 +76,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
       </section>
 
       {/* Editorial scroll-reveal banner */}
-      <section className="relative my-10 overflow-hidden bg-ink py-24 text-paper dark:bg-paper dark:text-ink lg:py-32">
+      <section className="relative my-10 overflow-hidden bg-paper py-24 text-ink dark:bg-ink dark:text-paper lg:py-32">
         <div className="container-edge max-w-4xl text-center">
           <SplitText
             as="h2"
@@ -82,7 +85,7 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
             {`${product.name}.\n${product.tagline}`}
           </SplitText>
           <Reveal variant="fade-up" delay={0.3}>
-            <p className="mx-auto mt-8 max-w-xl text-lg text-paper/70 dark:text-ink/70">
+            <p className="mx-auto mt-8 max-w-xl text-lg text-ink/70 dark:text-paper/70">
               {product.description}
             </p>
           </Reveal>
@@ -100,6 +103,9 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
       {related.length > 0 && (
         <ProductRow eyebrow="You may also like" title="Complete the kit." products={related} />
       )}
+
+      <RecentlyViewed excludeId={product.id} />
+      <ProductViewTracker productId={product.id} />
     </div>
   );
 }

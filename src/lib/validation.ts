@@ -8,7 +8,7 @@ export const shippingSchema = z.object({
   address:   z.string().min(5, "Enter a valid address"),
   city:      z.string().min(1, "City is required"),
   state:     z.string().min(1, "State is required"),
-  zip:       z.string().regex(/^\d{4,10}$/, "Invalid postal code"),
+  zip:       z.string().min(3, "Invalid postal code"),
   country:   z.string().min(1, "Country is required"),
 });
 

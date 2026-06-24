@@ -7,7 +7,10 @@ import { CartDrawer } from "@/components/layout/CartDrawer";
 import { SearchOverlay } from "@/components/layout/SearchOverlay";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
+import { AuthSessionProvider } from "@/components/layout/AuthSessionProvider";
 import { CustomCursor } from "@/components/ui/CustomCursor";
+import { AdminLayoutGuard } from "@/components/layout/AdminLayoutGuard";
+import LiveChatWrapper from "@/components/chat/LiveChatWrapper";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -44,17 +47,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="font-sans antialiased [&:has(.custom-cursor)]:cursor-none">
-        <ThemeProvider>
-          <CustomCursor />
-          <Navbar />
-          <PageTransition>
-            <main className="min-h-screen">{children}</main>
-          </PageTransition>
-          <Footer />
-          <CartDrawer />
-          <SearchOverlay />
-        </ThemeProvider>
+      <body className="font-sans antialiased">
+        <AuthSessionProvider>
+          <ThemeProvider>
+            <AdminLayoutGuard
+              navbar={<Navbar />}
+              footer={<Footer />}
+              cursor={<CustomCursor />}
+              cart={<CartDrawer />}
+              search={<SearchOverlay />}
+            >
+              <PageTransition>
+                <main className="min-h-screen">{children}</main>
+              </PageTransition>
+            </AdminLayoutGuard>
+            <LiveChatWrapper />
+          </ThemeProvider>
+        </AuthSessionProvider>
       </body>
     </html>
   );

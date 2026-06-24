@@ -4,29 +4,41 @@
   "private": true,
   "description": "Premium e-commerce storefront — Apple/Nike inspired. Frontend MVP with mock data, ready for backend integration.",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+  "dev": "node server.js",
+"build": "next build",
+"start": "NODE_ENV=production node server.js",
     "lint": "next lint",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "seed": "ts-node --project tsconfig.json -e \"require('tsconfig-paths/register'); require('./src/scripts/seed.ts')\""
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.4.0",
+    "@hookform/resolvers": "^3.10.0",
+    "@stripe/react-stripe-js": "^6.6.0",
+    "@stripe/stripe-js": "^9.8.0",
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.10.0",
     "clsx": "^2.1.1",
     "framer-motion": "^11.11.9",
     "gsap": "^3.12.5",
     "lucide-react": "^0.451.0",
+    "mongoose": "^9.7.2",
     "next": "14.2.15",
+    "next-auth": "^4.24.14",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.80.0",
+    "recharts": "^3.9.0",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "stripe": "^22.2.3",
     "tailwind-merge": "^2.5.4",
-    "zod": "^4.4.3",
+    "zod": "^3.25.76",
     "zustand": "^4.5.5"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.0",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.16.11",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",
@@ -36,6 +48,8 @@
     "lighthouse": "^13.4.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.6.3"
   }
 }

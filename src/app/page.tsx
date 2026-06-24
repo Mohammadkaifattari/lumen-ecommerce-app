@@ -5,12 +5,12 @@ import { CategoryShowcase } from "@/components/home/CategoryShowcase";
 import { Manifesto } from "@/components/home/Manifesto";
 import { ProductRow } from "@/components/home/ProductRow";
 import { Newsletter } from "@/components/home/Newsletter";
-import { getFeaturedProducts, getNewArrivals, getBestSellers } from "@/lib/data";
+import { getFeaturedProducts, getNewArrivals, getBestSellers } from "@/lib/products";
 
-export default function HomePage() {
-  const featured = getFeaturedProducts();
-  const newArrivals = getNewArrivals(4);
-  const bestSellers = getBestSellers(4);
+export default async function HomePage() {
+  const featured = await getFeaturedProducts();
+  const newArrivals = await getNewArrivals(4);
+  const bestSellers = await getBestSellers(4);
 
   return (
     <>

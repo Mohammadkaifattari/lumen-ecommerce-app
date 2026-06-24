@@ -40,7 +40,7 @@ function img(id: string, w = 1200, h = 1200) {
 }
 
 export const CATEGORIES: { id: Category; label: string; description: string; image: string }[] = [
-  { id: "footwear",    label: "Footwear",    description: "Engineered for motion.",     image: img("photo-1606107557195-0e29a79e0cff", 800, 1067) },
+  { id: "footwear",    label: "Footwear",    description: "Engineered for motion.",     image: img("photo-1542291026-7eec264c27ff", 800, 1067) },
   { id: "apparel",     label: "Apparel",     description: "Layered for performance.",   image: img("photo-1516826957135-700dedea698c", 800, 1067) },
   { id: "accessories", label: "Accessories", description: "The finishing detail.",       image: img("photo-1556306535-0f09a537f0a3", 800, 1067) },
   { id: "equipment",   label: "Equipment",   description: "Built for the grind.",        image: img("photo-1571019614242-c5c5dee9f50b", 800, 1067) },
@@ -224,8 +224,8 @@ export const PRODUCTS: Product[] = [
     category: "apparel",
     images: [
       { src: img("photo-1556821840-3a63f95609a7"), alt: "Drift Hoodie front" },
-      { src: img("photo-1622470953794-aa9c70b0fb9d"), alt: "Drift Hoodie back" },
-      { src: img("photo-1548036328-c9fa89d128fa"), alt: "Drift Hoodie hood detail" },
+      { src: img("photo-1579572331145-5e53b299c64e"), alt: "Drift Hoodie back" },
+      { src: img("photo-1578768079052-aa76e52ff62e"), alt: "Drift Hoodie hood detail" },
     ],
     colors: [COLORS.tripleBlack, COLORS.slate, COLORS.sand],
     sizes: ["S", "M", "L", "XL", "XXL"],

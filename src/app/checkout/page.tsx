@@ -1,12 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, CreditCard, Truck, Lock, ShoppingBag, ArrowLeft } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSession } from "next-auth/react";
+import { loadStripe } from "@stripe/stripe-js";
+import {
+  Elements,
+  CardNumberElement,
+  CardExpiryElement,
+  CardCvcElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
+// PaymentElement removed — using individual card elements
 import { useCart } from "@/store/cart";
 import { formatPrice } from "@/lib/utils";
 import {
@@ -14,7 +25,9 @@ import {
   paymentSchema,  PaymentData,
 } from "@/lib/validation";
 
-type Step = 0 | 1 | 2 | 3;
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+
+type Step = 0 | 1 | 2 | 3 | 4;
 
 const STEPS = [
   { id: 0, label: "Shipping", icon: Truck },
@@ -45,14 +58,90 @@ export default function CheckoutPage() {
     setStep(next);
   };
 
-  const placeOrder = () => {
+  const { data: session } = useSession();
+
+  const stripeElementsRef = useRef<ReturnType<typeof useElements> | null>(null);
+  const stripeRef = useRef<Awaited<ReturnType<typeof stripePromise>> | null>(null);
+  const cardNameRef = useRef<string>("");
+  const confirmedPaymentIntentRef = useRef<string | null>(null);
+
+  const [isPlacing, setIsPlacing] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  const confirmCard = async () => {
+    const stripe = stripeRef.current;
+    const elements = stripeElementsRef.current;
+    if (!stripe || !elements) return;
+
+    const piRes = await fetch("/api/stripe/payment-intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: total }),
+    });
+    const { clientSecret } = await piRes.json();
+    if (!clientSecret) return;
+
+    const cardElement = elements.getElement(CardNumberElement);
+    if (!cardElement) return;
+
+    const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card: cardElement,
+        billing_details: { name: cardNameRef.current },
+      },
+    });
+
+    if (error) {
+      setPaymentError(error.message ?? "Payment failed");
+      goTo(1);
+      return;
+    }
+
+    confirmedPaymentIntentRef.current = paymentIntent?.id ?? null;
+    goTo(2);
+  };
+
+  const placeOrder = async () => {
+    if (!shippingData.current) return;
+    setIsPlacing(true);
+    setPaymentError(null);
+
+    // Order DB mein save karo
+    const body = {
+      total,
+      stripePaymentIntentId: confirmedPaymentIntentRef.current,
+      items: lines.map((l) => ({
+        productId: l.productId,
+        slug: l.slug,
+        name: l.name,
+        image: l.image,
+        price: l.price,
+        color: l.color,
+        size: l.size,
+        quantity: l.quantity,
+      })),
+      shippingAddress: {
+        fullName: `${shippingData.current.firstName} ${shippingData.current.lastName}`,
+        line1: shippingData.current.address,
+        city: shippingData.current.city,
+        state: shippingData.current.state,
+        zip: shippingData.current.zip,
+        country: shippingData.current.country,
+      },
+    };
+    await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
     clear();
-    goTo(3);
+    goTo(4);
     setTimeout(() => router.push("/account"), 6000);
   };
 
   if (!mounted) return <div className="container-edge h-[60vh]" />;
-  if (step === 3) return <SuccessScreen />;
+  if (step === 4) return <SuccessScreen />;
 
   if (lines.length === 0) {
     return (
@@ -85,7 +174,7 @@ export default function CheckoutPage() {
               <div className="flex items-center gap-2">
                 <motion.div
                   animate={{
-                    backgroundColor: active || done ? "var(--accent)" : "transparent",
+                    backgroundColor: active || done ? "var(--accent)" : "rgba(0,0,0,0)",
                     scale: active ? 1.08 : 1,
                   }}
                   className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-ink dark:border-paper"
@@ -137,19 +226,23 @@ export default function CheckoutPage() {
                   }}
                 />
               )}
-              {step === 1 && (
-                <PaymentForm
-                  defaultValues={paymentData.current ?? undefined}
-                  onValid={(data) => {
-                    paymentData.current = data;
-                    goTo(2);
-                  }}
-                  onBack={() => goTo(0)}
-                />
-              )}
               {step === 2 && (
                 <ReviewStep lines={lines} total={total} />
               )}
+              <div style={{ display: step === 1 ? "block" : "none" }}>
+                <Elements stripe={stripePromise}>
+                  <PaymentForm
+                    onValid={() => confirmCard()}
+                    onBack={() => goTo(0)}
+                    onStripeReady={(s, e) => {
+                      stripeRef.current = s;
+                      stripeElementsRef.current = e;
+                    }}
+                    onNameChange={(name) => { cardNameRef.current = name; }}
+                  />
+                </Elements>
+              </div>
+              
             </motion.div>
           </AnimatePresence>
 
@@ -162,8 +255,9 @@ export default function CheckoutPage() {
               >
                 <ArrowLeft className="h-4 w-4" /> Back
               </button>
-              <button onClick={placeOrder} className="btn-primary bg-accent text-ink">
-                Place order — {formatPrice(total)}
+              {paymentError && <p className="text-sm text-red-500">{paymentError}</p>}
+              <button onClick={placeOrder} disabled={isPlacing} className="btn-primary bg-accent text-ink">
+                {isPlacing ? "Processing…" : `Place order — ${formatPrice(total)}`}
               </button>
             </div>
           )}
@@ -233,13 +327,15 @@ interface FieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   className?: string;
 }
 
-function Field({ label, error, className = "", ...props }: FieldProps) {
+const Field = React.forwardRef<HTMLInputElement, FieldProps>(
+  ({ label, error, className = "", ...props }, ref) => {
   return (
     <label className={`block ${className}`}>
       <span className="mb-1.5 block text-xs uppercase tracking-wider text-ink-muted dark:text-paper/50">
         {label}
       </span>
       <input
+        ref={ref}
         {...props}
         aria-invalid={!!error}
         className={`w-full rounded-xl border bg-transparent px-4 py-3 text-sm outline-none transition-colors
@@ -262,10 +358,10 @@ function Field({ label, error, className = "", ...props }: FieldProps) {
           </motion.p>
         )}
       </AnimatePresence>
-    </label>
+  </label>
   );
-}
-
+});
+Field.displayName = "Field";
 // ── Shipping Form ─────────────────────────────────────────
 
 function ShippingForm({
@@ -282,7 +378,7 @@ function ShippingForm({
   } = useForm<ShippingData>({
     resolver: zodResolver(shippingSchema),
     defaultValues: defaultValues ?? {},
-    mode: "onTouched",
+    mode: "onSubmit",
   });
 
   return (
@@ -308,47 +404,48 @@ function ShippingForm({
 
 // ── Payment Form ──────────────────────────────────────────
 
+const stripeElementStyle = {
+  base: {
+    fontSize: "14px",
+    color: "#fafafa",
+    fontFamily: "Inter, sans-serif",
+    "::placeholder": { color: "#555555" },
+  },
+  invalid: { color: "#ef4444" },
+};
+
 function PaymentForm({
-  defaultValues,
   onValid,
   onBack,
+  onStripeReady,
+  onNameChange,
 }: {
-  defaultValues?: Partial<PaymentData>;
-  onValid: (data: PaymentData) => void;
+  onValid: () => void;
   onBack: () => void;
+  onStripeReady: (stripe: any, elements: any) => void;
+  onNameChange: (name: string) => void;
 }) {
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<PaymentData>({
-    resolver: zodResolver(paymentSchema),
-    defaultValues: defaultValues ?? {},
-    mode: "onTouched",
-  });
+  const stripe = useStripe();
+  const elements = useElements();
+  const [nameOnCard, setNameOnCard] = useState("");
+  const [cardError, setCardError] = useState<string | null>(null);
 
-  // Format card number as user types: "4242424242424242" → "4242 4242 4242 4242"
-  const handleCardInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
-    const formatted = raw.match(/.{1,4}/g)?.join(" ") ?? raw;
-    setValue("cardNumber", formatted, { shouldValidate: true });
-    e.target.value = formatted;
-  };
+  useEffect(() => {
+    if (stripe && elements) onStripeReady(stripe, elements);
+  }, [stripe, elements]);
 
-  // Format expiry: "1225" → "12 / 25"
-  const handleExpiryInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, "").slice(0, 4);
-    const formatted = raw.length > 2 ? `${raw.slice(0, 2)} / ${raw.slice(2)}` : raw;
-    setValue("expiry", formatted, { shouldValidate: true });
-    e.target.value = formatted;
+  const handleContinue = () => {
+    if (!nameOnCard.trim()) { setCardError("Name on card required"); return; }
+    setCardError(null);
+    onNameChange(nameOnCard);
+    onValid();
   };
 
   return (
-    <form onSubmit={handleSubmit(onValid)} noValidate>
+    <div>
       <h2 className="mb-1 text-2xl font-semibold">Payment</h2>
       <p className="mb-6 text-sm text-ink-muted dark:text-paper/60">
-        This is a demo — no real charge. In production, Stripe handles this securely.
+        Secured by Stripe · Test mode
       </p>
       <div className="mb-4 flex gap-3">
         <div className="flex-1 rounded-xl border-2 border-ink p-4 text-center text-sm font-medium dark:border-paper">Card</div>
@@ -356,45 +453,47 @@ function PaymentForm({
         <div className="flex-1 rounded-xl border border-ink/15 p-4 text-center text-sm text-ink-muted dark:border-paper/20 dark:text-paper/50">Google Pay</div>
       </div>
       <div className="grid gap-4">
-        <Field
-          label="Card number"
-          placeholder="4242 4242 4242 4242"
-          inputMode="numeric"
-          error={errors.cardNumber?.message}
-          {...register("cardNumber")}
-          onChange={handleCardInput}
-        />
+        {/* Card Number */}
+        <label className="block">
+          <span className="mb-1.5 block text-xs uppercase tracking-wider text-ink-muted dark:text-paper/50">Card number</span>
+          <div className="w-full rounded-xl border border-ink/15 px-4 py-3 dark:border-paper/20">
+            <CardNumberElement options={{ style: stripeElementStyle, disableLink: true }} />
+          </div>
+        </label>
+        {/* Expiry + CVC */}
         <div className="grid grid-cols-2 gap-4">
-          <Field
-            label="Expiry"
-            placeholder="MM / YY"
-            error={errors.expiry?.message}
-            {...register("expiry")}
-            onChange={handleExpiryInput}
-          />
-          <Field
-            label="CVC"
-            placeholder="123"
-            inputMode="numeric"
-            maxLength={4}
-            error={errors.cvc?.message}
-            {...register("cvc")}
-          />
+          <label className="block">
+            <span className="mb-1.5 block text-xs uppercase tracking-wider text-ink-muted dark:text-paper/50">Expiry</span>
+            <div className="w-full rounded-xl border border-ink/15 px-4 py-3 dark:border-paper/20">
+              <CardExpiryElement options={{ style: stripeElementStyle }} />
+            </div>
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-xs uppercase tracking-wider text-ink-muted dark:text-paper/50">CVC</span>
+            <div className="w-full rounded-xl border border-ink/15 px-4 py-3 dark:border-paper/20">
+              <CardCvcElement options={{ style: stripeElementStyle }} />
+            </div>
+          </label>
         </div>
-        <Field
-          label="Name on card"
-          placeholder="Alex Rivera"
-          error={errors.nameOnCard?.message}
-          {...register("nameOnCard")}
-        />
+        {/* Name on card — regular input */}
+        <label className="block">
+          <span className="mb-1.5 block text-xs uppercase tracking-wider text-ink-muted dark:text-paper/50">Name on card</span>
+          <input
+            value={nameOnCard}
+            onChange={(e) => setNameOnCard(e.target.value)}
+            placeholder="Alex Rivera"
+            className="w-full rounded-xl border border-ink/15 bg-transparent px-4 py-3 text-sm outline-none transition-colors focus:border-ink dark:border-paper/20 dark:focus:border-paper"
+          />
+        </label>
+        {cardError && <p className="text-xs text-red-500">{cardError}</p>}
       </div>
       <div className="mt-8 flex items-center justify-between">
         <button type="button" onClick={onBack} className="flex items-center gap-2 text-sm font-medium">
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
-        <button type="submit" className="btn-primary">Continue</button>
+        <button type="button" onClick={handleContinue} className="btn-primary">Continue</button>
       </div>
-    </form>
+    </div>
   );
 }
 
@@ -431,7 +530,7 @@ function ReviewStep({
   );
 }
 
-// ── Success Screen ────────────────────────────────────────
+
 
 function SuccessScreen() {
   return (

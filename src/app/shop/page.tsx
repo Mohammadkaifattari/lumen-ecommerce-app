@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ShopBrowser } from "@/components/shop/ShopBrowser";
-import { getAllProducts } from "@/lib/data";
+import { getAllProducts } from "@/lib/products";
 
 export const metadata: Metadata = {
   title: "Shop",
@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 };
 
 // SearchParams must be read in a Client component, so we wrap with Suspense.
-export default function ShopPage() {
-  const products = getAllProducts();
+export default async function ShopPage() {
+  const products = await getAllProducts();
 
   return (
     <div className="pt-16 lg:pt-20">

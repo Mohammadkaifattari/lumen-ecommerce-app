@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Minus, Plus, ShoppingBag, Heart, Truck, RotateCcw, Shield } from "lucide-react";
+import { SizeGuideModal } from "@/components/product/SizeGuideModal";
 import type { Product } from "@/types";
 import { useCart } from "@/store/cart";
 import { useWishlist } from "@/store/wishlist";
@@ -19,6 +20,7 @@ export function ProductConfigurator({ product }: { product: Product }) {
   const [qty, setQty] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
   const handleAdd = () => {
     if (!size) {
@@ -117,7 +119,12 @@ export function ProductConfigurator({ product }: { product: Product }) {
           <h3 className="text-xs font-medium uppercase tracking-wider text-ink-muted dark:text-paper/50">
             Size
           </h3>
-          <button className="text-xs underline-offset-2 hover:underline">Size guide</button>
+          <button
+            onClick={() => setSizeGuideOpen(true)}
+            className="text-xs underline-offset-2 hover:underline"
+          >
+            Size guide
+          </button>
         </div>
         <div className="flex flex-wrap gap-2">
           {product.sizes.map((s) => (
@@ -240,6 +247,8 @@ export function ProductConfigurator({ product }: { product: Product }) {
           {product.description}
         </p>
       </div>
+
+      <SizeGuideModal open={sizeGuideOpen} onClose={() => setSizeGuideOpen(false)} />
     </div>
   );
 }
