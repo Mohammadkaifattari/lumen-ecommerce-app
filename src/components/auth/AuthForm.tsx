@@ -62,7 +62,17 @@ export function AuthForm({ mode: initial }: { mode: Mode }) {
     }
 
     setDone(true);
-    setTimeout(() => router.push("/account"), 900);
+    const role = (result as any)?.role;
+    // Session se role lene ke liye thoda wait karo
+    setTimeout(async () => {
+      const { getSession } = await import('next-auth/react');
+      const session = await getSession();
+      if ((session?.user as any)?.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/account');
+      }
+    }, 900);
   };
 
   const flip = (next: Mode) => setMode(next);

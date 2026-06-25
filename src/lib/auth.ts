@@ -4,14 +4,6 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import { UserModel } from "@/models/User";
 
-/**
- * NextAuth configuration. Lives in /lib (not the route handler) because the
- * App Router forbids non-HTTP-method exports from route files — exporting
- * `authOptions` from the route triggers a build-time type error.
- *
- * Routes import this via `getServerSession(authOptions)`; the route handler
- * imports it to wire up GET/POST.
- */
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   pages: {
@@ -67,6 +59,10 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).role = token.role ?? "user";
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl;
     },
   },
 };
