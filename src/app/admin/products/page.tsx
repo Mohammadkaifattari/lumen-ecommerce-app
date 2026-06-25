@@ -98,7 +98,7 @@ export default function AdminProductsPage() {
     setUploading(true);
     const fd = new FormData();
     fd.append("file", file);
-    fd.append("upload_preset", "lumen_unsigned");
+    fd.append("upload_preset", "kaif-e-commerce");
     try {
       const res = await fetch(
         `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -267,7 +267,28 @@ export default function AdminProductsPage() {
             </Field>
           </div>
           <Field label="Category">
-            <Input value={form.category} onChange={(v) => setForm((f) => ({ ...f, category: v }))} placeholder="footwear" />
+            <select
+              value={form.category}
+              onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+              style={{
+                width: "100%",
+                padding: "10px 14px",
+                borderRadius: RADIUS.sm,
+                background: COLORS.field,
+                border: `1px solid ${COLORS.line}`,
+                color: COLORS.text,
+                fontSize: "0.85rem",
+                outline: "none",
+                boxSizing: "border-box" as const,
+                fontFamily: "inherit",
+              }}
+            >
+              <option value="">Select category</option>
+              <option value="footwear">Footwear</option>
+              <option value="apparel">Apparel</option>
+              <option value="accessories">Accessories</option>
+              <option value="equipment">Equipment</option>
+            </select>
           </Field>
           <Field label="Description">
             <Textarea value={form.description} onChange={(v) => setForm((f) => ({ ...f, description: v }))} placeholder="Product description…" />

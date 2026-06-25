@@ -454,7 +454,7 @@ export function Modal({
   width?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  useFocusTrap(ref, open, onClose);
+  // useFocusTrap(ref, open, onClose);
 
   useEffect(() => {
     if (!open) return;
@@ -475,15 +475,11 @@ export function Modal({
             onClick={onClose}
             style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
           />
-          <motion.div
+          <div
             ref={ref}
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            initial={{ opacity: 0, scale: 0.96, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 12 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             style={{
               position: "fixed",
               left: "50%",
@@ -506,13 +502,14 @@ export function Modal({
               <button
                 onClick={onClose}
                 aria-label="Close"
+                tabIndex={-1}
                 style={{ background: "none", border: "none", color: COLORS.textMid, cursor: "pointer", padding: 4 }}
               >
                 <X style={{ width: 20, height: 20 }} />
               </button>
             </div>
             {children}
-          </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>

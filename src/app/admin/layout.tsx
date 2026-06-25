@@ -340,7 +340,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main content */}
-      <main style={{ marginLeft: "240px", flex: 1, padding: "32px 40px", minWidth: 0 }}>
+      <main style={{ marginLeft: "240px", flex: 1, padding: "32px 40px", minWidth: 0, position: "relative" }}>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

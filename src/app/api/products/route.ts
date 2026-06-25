@@ -21,3 +21,27 @@ export async function GET() {
     );
   }
 }
+export async function POST(req: Request) {
+  try {
+    await connectDB();
+    const body = await req.json();
+    const productData = {
+      ...body,
+      tagline: body.tagline || body.name,
+      colors: body.colors || [],
+      sizes: body.sizes || [],
+      rating: body.rating || 0,
+      reviewCount: body.reviewCount || 0,
+      images: (body.images || []).map((src: string) =>
+        typeof src === "string" ? { src, alt: body.name } : src
+      ),
+    };
+    const product = await ProductModel.create(productData);
+    return Response.json({ ...product.toObject(), id: product._id.toString(), _id: undefined });
+  } catch (err: any) {
+    return Response.json(
+      { error: "Failed to create product", details: err.message },
+      { status: 500 }
+    );
+  }
+}
