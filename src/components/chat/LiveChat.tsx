@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { io as socketIO } from 'socket.io-client';
+import { pusherClient } from '@/lib/pusherClient';
 import { MessageCircle, X, Send } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from 'next-auth/react';
@@ -19,7 +19,7 @@ export default function LiveChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [online, setOnline] = useState(false);
-  const socketRef = useRef<any>(null);
+  
   const bottomRef = useRef<HTMLDivElement>(null);
   const roomId = session?.user?.email ?? 'guest';
 
@@ -30,21 +30,12 @@ export default function LiveChat() {
   }, [roomId]);
 
   useEffect(() => {
-    const socket = socketIO();
-    socketRef.current = socket;
-
-    socket.on('connect', () => setOnline(true));
-    socket.on('disconnect', () => setOnline(false));
-
-    socket.on('chat-message', ({ roomId: incomingRoomId, message }: { roomId: string; message: Message }) => {
-      if (incomingRoomId === roomId) {
-        setMessages(prev => [...prev, message]);
-      }
+    setOnline(true);
+    const channel = pusherClient.subscribe(`chat-${roomId}`);
+    channel.bind('chat-message', ({ message }: { roomId: string; message: Message }) => {
+      setMessages(prev => [...prev, message]);
     });
-
-    socket.emit('join-chat', { roomId });
-
-    return () => { socket.disconnect(); };
+    return () => { pusherClient.unsubscribe(`chat-${roomId}`); setOnline(false); };
   }, [roomId]);
 
   useEffect(() => {
@@ -59,7 +50,6 @@ export default function LiveChat() {
       sender: 'user',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
-    socketRef.current?.emit('chat-message', { roomId, message: msg });
     setMessages(prev => [...prev, msg]);
     setInput('');
     fetch(`/api/chat/${encodeURIComponent(roomId)}`, {

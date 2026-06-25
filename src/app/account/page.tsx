@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { io as socketIO } from "socket.io-client";
+import { pusherClient } from "@/lib/pusherClient";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -42,13 +42,13 @@ export default function AccountPage() {
         setExpanded(data.orders?.[0]?._id ?? null);
       });
 
-    const socket = socketIO();
-    socket.on("order-status-updated", (data: { orderId: string; status: string }) => {
+    const channel = pusherClient.subscribe('orders-channel');
+    channel.bind('order-status-updated', (data: { orderId: string; status: string }) => {
       setOrders((prev) =>
         prev.map((o) => o._id === data.orderId ? { ...o, status: data.status } : o)
       );
     });
-    return () => { socket.disconnect(); };
+    return () => { pusherClient.unsubscribe('orders-channel'); };
   }, []);
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login");

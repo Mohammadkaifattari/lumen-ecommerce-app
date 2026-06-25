@@ -1,7 +1,6 @@
 const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
-const { Server } = require('socket.io');
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
@@ -13,47 +12,8 @@ app.prepare().then(() => {
     handle(req, res, parsedUrl);
   });
 
-  const io = new Server(httpServer, {
-    cors: {
-      origin: '*',
-      methods: ['GET', 'POST'],
-    },
+  const PORT = process.env.PORT || 3000;
+  httpServer.listen(PORT, () => {
+    console.log(`> Ready on http://localhost:${PORT}`);
   });
-
-  // Global pe store karo taake API routes access kar sakein
-  global.io = io;
-
-  io.on('connection', (socket) => {
-    console.log('Client connected:', socket.id);
-
-    socket.on('join-admin', () => {
-      socket.join('admin-room');
-      console.log('Admin joined:', socket.id);
-    });
-
-    socket.on('join-chat', ({ roomId }) => {
-      socket.join(`chat-${roomId}`);
-      console.log(`User joined chat room: chat-${roomId}`);
-    });
-
-    socket.on('chat-message', ({ roomId, message }) => {
-      // Hamesha admin ko bhejo
-      io.to('admin-room').emit('chat-message', { roomId, message });
-      // Hamesha us room ke users ko bhejo
-      io.to(`chat-${roomId}`).emit('chat-message', { roomId, message });
-    });
-
-    socket.on('new-user', (data) => {
-      io.to('admin-room').emit('new-user', data);
-    });
-
-    socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.id);
-    });
-  });
-
- const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, () => {
-  console.log(`> Ready on http://localhost:${PORT}`);
-});
 });

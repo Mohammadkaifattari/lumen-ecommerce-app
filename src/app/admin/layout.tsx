@@ -15,7 +15,7 @@ import {
   MessageSquare,
   Bell,
 } from "lucide-react";
-import { io as socketIO } from "socket.io-client";
+import { pusherClient } from "@/lib/pusherClient";
 import { COLORS, RADIUS } from "./_components/AdminUI";
 import { useNotificationStore } from "@/store/notificationStore";
 
@@ -33,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { data: session } = useSession();
   const { orderNotifs, chatNotifs, userNotifs, addOrder, addChat, addUser, clearOrders, clearChat, clearUsers } = useNotificationStore();
   const [showNotif, setShowNotif] = useState(false);
-  const socketRef = useRef<any>(null);
+  
 
   const totalNotifs = orderNotifs.length + chatNotifs.length + userNotifs.length;
 
@@ -57,15 +57,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if ((session?.user as any)?.role !== 'admin') return;
-    const socket = socketIO();
-    socketRef.current = socket;
-    socket.emit('join-admin');
-    socket.on('new-order', (data: any) => { addOrder(data); });
-    socket.on('chat-message', ({ roomId, message }: any) => {
+    const channel = pusherClient.subscribe('admin-channel');
+    channel.bind('new-order', (data: any) => { addOrder(data); });
+    channel.bind('chat-message', ({ roomId, message }: any) => {
       if (message.sender === 'user') { addChat({ roomId, message }); }
     });
-    socket.on('new-user', (data: any) => { addUser(data); });
-    return () => { socket.disconnect(); };
+    channel.bind('new-user', (data: any) => { addUser(data); });
+    return () => { pusherClient.unsubscribe('admin-channel'); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 

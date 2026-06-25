@@ -407,9 +407,9 @@ function ShippingForm({
 const stripeElementStyle = {
   base: {
     fontSize: "14px",
-    color: "#fafafa",
+    color: typeof window !== 'undefined' && document.documentElement.classList.contains('dark') ? "#fafafa" : "#0a0a0a",
     fontFamily: "Inter, sans-serif",
-    "::placeholder": { color: "#555555" },
+    "::placeholder": { color: "#888888" },
   },
   invalid: { color: "#ef4444" },
 };

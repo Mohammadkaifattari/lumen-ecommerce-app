@@ -32,14 +32,13 @@ export async function POST(req: Request) {
     });
 
     // Admin ko notify karo
-    if (global.io) {
-      global.io.to('admin-room').emit('new-user', {
-        userId: user._id.toString(),
-        name: user.name,
-        email: user.email,
-        time: new Date().toISOString(),
-      });
-    }
+    const { pusherServer } = await import('@/lib/pusher');
+    await pusherServer.trigger('admin-channel', 'new-user', {
+      userId: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      time: new Date().toISOString(),
+    });
 
     return Response.json({
       status: "✅ Account created",

@@ -10,9 +10,6 @@ export async function POST(req: Request) {
     if (!session?.user) {
       return NextResponse.json({ error: "Login required" }, { status: 401 });
     }
-    if (!session?.user) {
-      return NextResponse.json({ error: "Login required" }, { status: 401 });
-    }
     const body = await req.json();
     await connectDB();
 
@@ -25,13 +22,12 @@ export async function POST(req: Request) {
     });
 
     // Socket.IO — admin ko notify karo
-if (global.io) {
-  global.io.to('admin-room').emit('new-order', {
-    orderId: order._id,
-    total: body.total,
-    items: body.items,
-  });
-}
+const { pusherServer } = await import('@/lib/pusher');
+await pusherServer.trigger('admin-channel', 'new-order', {
+  orderId: order._id,
+  total: body.total,
+  items: body.items,
+});
 
 return NextResponse.json({ success: true, orderId: order._id });
   } catch (err) {

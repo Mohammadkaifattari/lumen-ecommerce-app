@@ -25,12 +25,11 @@ export async function PATCH(
 
     if (!order) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  if (global.io) {
-    global.io.emit('order-status-updated', {
-      orderId: params.id,
-      status,
-    });
-  }
+  const { pusherServer } = await import('@/lib/pusher');
+  await pusherServer.trigger('orders-channel', 'order-status-updated', {
+    orderId: params.id,
+    status,
+  });
 
   return NextResponse.json(order);
   } catch (err) {
