@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -218,8 +219,8 @@ export function AuthForm({ mode: initial }: { mode: Mode }) {
           </AnimatePresence>
         </div>
 
-        <p className="mt-6 text-center text-xs text-ink-muted dark:text-paper/50">
-          Demo only — no real authentication occurs.
+          <p className="mt-6 text-center text-xs text-ink-muted dark:text-paper/50">
+          Secure sign in powered by NextAuth.
         </p>
       </div>
     </div>

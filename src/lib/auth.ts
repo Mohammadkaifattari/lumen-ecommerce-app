@@ -60,7 +60,10 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async redirect({ url, baseUrl }) {
+    async redirect({ url, baseUrl, token }: any) {
+      if ((token?.role ?? (token as any)?.role) === "admin") {
+        return `${baseUrl}/admin`;
+      }
       if (url.startsWith(baseUrl)) return url;
       return baseUrl;
     },
