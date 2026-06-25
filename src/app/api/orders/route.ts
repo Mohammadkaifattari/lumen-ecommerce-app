@@ -7,8 +7,13 @@ import { OrderModel } from "@/models/Order";
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Login required" }, { status: 401 });
+    }
+    if (!session?.user) {
+      return NextResponse.json({ error: "Login required" }, { status: 401 });
+    }
     const body = await req.json();
-
     await connectDB();
 
     const order = await OrderModel.create({
