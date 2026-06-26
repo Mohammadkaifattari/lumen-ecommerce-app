@@ -1,6 +1,9 @@
 import { connectDB } from "@/lib/mongodb";
 import { ProductModel } from "@/models/Product";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   try {
     await connectDB();
