@@ -81,9 +81,12 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      if (url.startsWith(baseUrl)) return url;
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      return `${baseUrl}/account`;
-    },
+  if (url.includes("/login") || url.includes("/register")) {
+    return `${baseUrl}/account`;
+  }
+  if (url.startsWith(baseUrl)) return url;
+  if (url.startsWith("/")) return `${baseUrl}${url}`;
+  return `${baseUrl}/account`;
+},
   },
 };
