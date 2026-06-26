@@ -60,46 +60,9 @@ export default function CheckoutPage() {
 
   const { data: session } = useSession();
 
-  const stripeElementsRef = useRef<ReturnType<typeof useElements> | null>(null);
-  const stripeRef = useRef<Stripe | null>(null);
-  const cardNameRef = useRef<string>("");
-  const confirmedPaymentIntentRef = useRef<string | null>(null);
-
+    const confirmedPaymentIntentRef = useRef<string | null>(null);
   const [isPlacing, setIsPlacing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
-
-  const confirmCard = async () => {
-    const stripe = stripeRef.current;
-    const elements = stripeElementsRef.current;
-    if (!stripe || !elements) return;
-
-    const piRes = await fetch("/api/stripe/payment-intent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: total }),
-    });
-    const { clientSecret } = await piRes.json();
-    if (!clientSecret) return;
-
-    const cardElement = elements.getElement(CardNumberElement);
-    if (!cardElement) return;
-
-    const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: {
-        card: cardElement,
-        billing_details: { name: cardNameRef.current },
-      },
-    });
-
-    if (error) {
-      setPaymentError(error.message ?? "Payment failed");
-      goTo(1);
-      return;
-    }
-
-    confirmedPaymentIntentRef.current = paymentIntent?.id ?? null;
-    goTo(2);
-  };
 
   const placeOrder = async () => {
     if (!shippingData.current) return;
@@ -204,7 +167,7 @@ export default function CheckoutPage() {
         })}
       </div>
 
-      <div className="grid gap-12 lg:grid-cols-[1.6fr_1fr]">
+       <div className="grid gap-12 lg:grid-cols-[1.6fr_1fr]">
         {/* Form area */}
         <div className="min-h-[320px] overflow-hidden">
           <AnimatePresence mode="wait" custom={direction}>
@@ -226,26 +189,24 @@ export default function CheckoutPage() {
                   }}
                 />
               )}
+              {step === 1 && (
+                <Elements stripe={stripePromise}>
+                  <PaymentForm
+                    total={total}
+                    onBack={() => goTo(0)}
+                    onSuccess={(intentId) => {
+                      confirmedPaymentIntentRef.current = intentId;
+                      goTo(2);
+                    }}
+                    onError={(msg) => setPaymentError(msg)}
+                  />
+                </Elements>
+              )}
               {step === 2 && (
                 <ReviewStep lines={lines} total={total} />
               )}
-              <div style={{ display: step === 1 ? "block" : "none" }}>
-                <Elements stripe={stripePromise}>
-                  <PaymentForm
-                    onValid={() => confirmCard()}
-                    onBack={() => goTo(0)}
-                    onStripeReady={(s, e) => {
-                      stripeRef.current = s;
-                      stripeElementsRef.current = e;
-                    }}
-                    onNameChange={(name) => { cardNameRef.current = name; }}
-                  />
-                </Elements>
-              </div>
-              
             </motion.div>
           </AnimatePresence>
-
           {/* Step controls — only shown for Review step; Shipping/Payment handle their own */}
           {step === 2 && (
             <div className="mt-8 flex items-center justify-between">
@@ -415,33 +376,50 @@ const stripeElementStyle = {
 };
 
 function PaymentForm({
-  onValid,
+  total,
   onBack,
-  onStripeReady,
-  onNameChange,
+  onSuccess,
+  onError,
 }: {
-  onValid: () => void;
+  total: number;
   onBack: () => void;
-  onStripeReady: (stripe: any, elements: any) => void;
-  onNameChange: (name: string) => void;
+  onSuccess: (intentId: string) => void;
+  onError: (msg: string) => void;
 }) {
   const stripe = useStripe();
   const elements = useElements();
   const [nameOnCard, setNameOnCard] = useState("");
   const [cardError, setCardError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (stripe && elements) onStripeReady(stripe, elements);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stripe, elements]);
-
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!nameOnCard.trim()) { setCardError("Name on card required"); return; }
+    if (!stripe || !elements) { setCardError("Stripe not ready"); return; }
     setCardError(null);
-    onNameChange(nameOnCard);
-    onValid();
-  };
+    setLoading(true);
 
+    const piRes = await fetch("/api/stripe/payment-intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: total }),
+    });
+    const { clientSecret } = await piRes.json();
+    if (!clientSecret) { setCardError("Could not initialize payment"); setLoading(false); return; }
+
+    const cardElement = elements.getElement(CardNumberElement);
+    if (!cardElement) { setCardError("Card element not found"); setLoading(false); return; }
+
+    const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card: cardElement,
+        billing_details: { name: nameOnCard },
+      },
+    });
+
+    setLoading(false);
+    if (error) { setCardError(error.message ?? "Payment failed"); onError(error.message ?? ""); return; }
+    onSuccess(paymentIntent?.id ?? "");
+  };
   return (
     <div>
       <h2 className="mb-1 text-2xl font-semibold">Payment</h2>
@@ -492,7 +470,9 @@ function PaymentForm({
         <button type="button" onClick={onBack} className="flex items-center gap-2 text-sm font-medium">
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
-        <button type="button" onClick={handleContinue} className="btn-primary">Continue</button>
+            <button type="button" onClick={handleContinue} disabled={loading} className="btn-primary disabled:opacity-60">
+          {loading ? "Processing…" : "Continue"}
+        </button>
       </div>
     </div>
   );

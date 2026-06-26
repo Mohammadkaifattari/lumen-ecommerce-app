@@ -51,6 +51,8 @@ export function Navbar() {
     setMobileOpen(false);
   }, [pathname]);
 
+  if (pathname === "/login" || pathname === "/register") return null;
+
   return (
     <>
       <header

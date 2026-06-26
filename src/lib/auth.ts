@@ -1,5 +1,6 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import { UserModel } from "@/models/User";
@@ -8,8 +9,13 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
+    error: "/login",
   },
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -46,10 +52,24 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = (user as any).id;
         token.role = (user as any).role ?? "user";
+      }
+      if (account?.provider === "google") {
+        await connectDB();
+        let dbUser = await UserModel.findOne({ email: token.email });
+        if (!dbUser) {
+          dbUser = await UserModel.create({
+            name: token.name,
+            email: token.email,
+            password: "google-oauth",
+            role: "user",
+          });
+        }
+        token.id = dbUser._id.toString();
+        token.role = dbUser.role ?? "user";
       }
       return token;
     },
@@ -60,12 +80,10 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async redirect({ url, baseUrl, token }: any) {
-      if ((token?.role ?? (token as any)?.role) === "admin") {
-        return `${baseUrl}/admin`;
-      }
+    async redirect({ url, baseUrl }) {
       if (url.startsWith(baseUrl)) return url;
-      return baseUrl;
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      return `${baseUrl}/account`;
     },
   },
 };
