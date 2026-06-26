@@ -16,7 +16,7 @@ test.describe("Homepage", () => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     // Headline text is split across spans for the GSAP reveal — match the h1
     // element as a whole rather than via role text.
-    await expect(page.locator("h1")).toContainText("ENGINEERED", { timeout: 15_000 });
+    await expect(page.locator("h1")).toContainText(/CRAFTED/i, { timeout: 15_000 });
     await expect(page.getByRole("link", { name: "LUMEN home" })).toBeVisible();
   });
 
@@ -35,7 +35,9 @@ test.describe("Homepage", () => {
 test.describe("Navigation", () => {
   test("can navigate to the shop page via the navbar", async ({ page }) => {
     await page.goto("/", { waitUntil: "networkidle" });
-    await page.getByRole("link", { name: "Shop", exact: true }).first().click();
+    const shopLink = page.locator('nav ul.hidden.lg\\:flex a[href="/shop"]').first();
+    await expect(shopLink).toBeVisible();
+    await shopLink.click();
     await expect(page).toHaveURL(/\/shop/);
     await expect(page.locator("h1")).toBeVisible({ timeout: 10_000 });
   });

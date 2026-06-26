@@ -106,7 +106,7 @@ export function Hero() {
           The 2026 Collection
         </p>
 
-        <h1 className="font-bold leading-[0.85] tracking-tight text-[clamp(3rem,8vw,8rem)]">
+        <h1 className="font-bold leading-[0.85] tracking-tight text-[clamp(4.5rem,10vw,8rem)]">
           <span data-hero-line className="block overflow-hidden">
             <span className="inline-block">CRAFTED</span>
           </span>
@@ -118,20 +118,7 @@ export function Hero() {
           </span>
         </h1>
 
-        {/* Mobile-only Search Bar */}
-        <div data-hero-fade className="mt-8 flex lg:hidden items-center w-full max-w-sm rounded-full bg-white/10 p-1 backdrop-blur-md border border-white/20">
-          <div className="pl-4 pr-2">
-            <Search className="h-4 w-4 text-paper/70" />
-          </div>
-          <input 
-            type="text" 
-            placeholder="Search collection..." 
-            className="w-full bg-transparent text-paper placeholder:text-paper/50 focus:outline-none text-sm"
-          />
-          <button className="bg-accent text-ink px-4 py-2 rounded-full text-sm font-semibold hover:bg-accent/90 transition-colors">
-            Go
-          </button>
-        </div>
+
 
         <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
           <Link

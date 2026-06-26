@@ -41,9 +41,9 @@ function img(id: string, w = 1200, h = 1200) {
 
 export const CATEGORIES: { id: Category; label: string; description: string; image: string }[] = [
   { id: "footwear",    label: "Footwear",    description: "Engineered for motion.",     image: img("photo-1542291026-7eec264c27ff", 800, 1067) },
-  { id: "apparel",     label: "Apparel",     description: "Layered for performance.",   image: img("photo-1516826957135-700dedea698c", 800, 1067) },
+  { id: "apparel",     label: "Apparel",     description: "Layered for performance.",   image: img("photo-1556821840-3a63f95609a7", 800, 1067) },
   { id: "accessories", label: "Accessories", description: "The finishing detail.",       image: img("photo-1556306535-0f09a537f0a3", 800, 1067) },
-  { id: "equipment",   label: "Equipment",   description: "Built for the grind.",        image: img("photo-1571019614242-c5c5dee9f50b", 800, 1067) },
+  { id: "equipment",   label: "Equipment",   description: "Built for the grind.",        image: img("photo-1581009146145-b5ef050c2e1e", 800, 1067) },
 ];
 
 export const PRODUCTS: Product[] = [
@@ -153,8 +153,8 @@ export const PRODUCTS: Product[] = [
       "A proprietary moisture-wicking weave pulls sweat from your skin instantly. Laser-cut ventilation maps your body's hot zones. Zero chafe, all performance.",
     price: 65,
     category: "apparel",
-   images: [
-      { src: img("photo-1521572163474-6864f9cf17ab"), alt: "Lumen Tech Tee front" },
+    images: [
+      { src: img("photo-1581655353564-df123a1eb820"), alt: "Lumen Tech Tee front" },
       { src: img("photo-1571455786673-9d9d6c194f90"), alt: "Lumen Tech Tee back" },
       { src: img("photo-1583743814966-8936f5b7be1a"), alt: "Lumen Tech Tee fabric detail" },
     ],
@@ -321,7 +321,7 @@ export const PRODUCTS: Product[] = [
     category: "equipment",
     images: [
       { src: img("photo-1638536532686-d610adfc8e5c"), alt: "Forge Dumbbells on rack" },
-      { src: img("photo-1517836357463-d25dfeac3438"), alt: "Forge Dumbbells in use" },
+      { src: img("photo-1534438327276-14e5300c3a48"), alt: "Forge Dumbbells in use" },
       { src: img("photo-1583454110551-21f2fa2afe61"), alt: "Forge Dumbbells detail" },
     ],
     colors: [COLORS.tripleBlack, COLORS.slate],
@@ -364,9 +364,9 @@ export const PRODUCTS: Product[] = [
     price: 88,
     category: "equipment",
     images: [
-      { src: img("photo-1601901528942-b86f0f90c293"), alt: "Obsidian Yoga Mat rolled" },
-      { src: img("photo-1518611012118-696072aa579a"), alt: "Obsidian Yoga Mat flat" },
-      { src: img("photo-1540497077202-7c8a3999166f"), alt: "Obsidian Yoga Mat in use" },
+      { src: img("photo-1593810450967-f9c427ce37cb"), alt: "Obsidian Yoga Mat rolled" },
+      { src: img("photo-1599552611410-b9df74cbbba1"), alt: "Obsidian Yoga Mat flat" },
+      { src: img("photo-1576678927484-cc907957088c"), alt: "Obsidian Yoga Mat in use" },
     ],
     colors: [COLORS.tripleBlack, COLORS.slate, COLORS.forest],
     sizes: ["Standard"],
