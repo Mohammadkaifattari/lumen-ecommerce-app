@@ -5,6 +5,7 @@
  */
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, type ReactNode, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 /* ----------------------------------------------------------------------------
@@ -449,7 +450,7 @@ export function Modal({
     };
   }, [open]);
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {open && (
         <>
@@ -501,6 +502,9 @@ export function Modal({
       )}
     </AnimatePresence>
   );
+
+  if (typeof document === "undefined") return null;
+  return createPortal(modalContent, document.body);
 }
 
 const eyebrowStyle: CSSProperties = {
