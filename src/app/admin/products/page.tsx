@@ -253,7 +253,17 @@ export default function AdminProductsPage() {
       <Modal open={showModal} onClose={closeModal} title={editing ? "Edit Product" : "Add Product"} width={540}>
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <Field label="Product name">
-            <Input value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} placeholder="e.g. Aether Flight 1" />
+            <Input
+              value={form.name}
+              onChange={(v) =>
+                setForm((f) => ({
+                  ...f,
+                  name: v,
+                  slug: editing ? f.slug : v.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
+                }))
+              }
+              placeholder="e.g. Aether Flight 1"
+            />
           </Field>
           <Field label="Slug">
             <Input value={form.slug} onChange={(v) => setForm((f) => ({ ...f, slug: v }))} placeholder="aether-flight-1" />
