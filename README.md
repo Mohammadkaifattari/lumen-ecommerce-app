@@ -16,6 +16,7 @@ A high-end e-commerce frontend combining the bold, athletic energy of Nike with 
 - **Checkout** — animated multi-step flow (Shipping → Payment → Review) with a progress bar and a confetti success screen.
 - **Auth** — login/register with animated form transitions and a success checkmark (mock — no real auth).
 - **Account** — tabbed dashboard with expandable order history (with a tracking timeline), wishlist grid, and an editable profile.
+- **Admin Panel** — full premium dark-mode dashboard to manage products, orders, and users, featuring animated charts, data tables, and metrics.
 - **Global UX** — debounced live search overlay (⌘/Ctrl+K), dark-mode toggle (no FOUC), magnetic buttons, page transitions, responsive mobile-first layout, and `prefers-reduced-motion` support.
 
 ---
@@ -162,6 +163,7 @@ src/
 ├─ app/                      # App Router pages
 │  ├─ layout.tsx             # Root layout: fonts, theme script, shell
 │  ├─ page.tsx               # Homepage
+│  ├─ admin/                 # Premium dark-mode admin panel
 │  ├─ shop/page.tsx          # Listing + filters
 │  ├─ product/[slug]/        # Product detail (SSG, dynamic metadata, JSON-LD)
 │  ├─ cart/ · checkout/      # Cart + multi-step checkout
@@ -245,7 +247,6 @@ This is a **frontend MVP**. Be aware of the following before treating it as prod
 - **Order history does not persist** — the account page shows a canned mock, and orders placed in checkout are not saved anywhere (they clear the cart and show a success screen).
 - **Images are remote Unsplash URLs** — fine for a demo, but in production you'd host them on your own CDN to control caching, sizing, and availability. `next.config.mjs` whitelists the Unsplash hostnames.
 - **No real-time features** — the Socket.IO live-stock / order-notification features from the original spec are Phase 2; the low-stock badge on the product page is static.
-- **No admin panel** — the original spec's admin dashboard is not implemented in this MVP.
 - **Lighthouse scores** were measured on localhost (desktop preset) in a dev sandbox; real-world scores depend on hosting, CDN, and real image hosting. The scores reflect the code's quality, not deployed performance.
 
 ---

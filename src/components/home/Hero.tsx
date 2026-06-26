@@ -6,7 +6,7 @@ import { useRef, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { usePrefersReducedMotion } from "@/lib/hooks/usePrefersReducedMotion";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -100,13 +100,13 @@ export function Hero() {
       {/* Content */}
       <div
         ref={content}
-        className="container-edge flex h-full flex-col justify-end pb-20 pt-32 text-paper lg:pb-28"
+        className="container-edge flex h-full flex-col justify-center lg:justify-end pb-12 lg:pb-28 pt-32 text-paper"
       >
-        <p data-hero-fade className="eyebrow mb-5 text-paper/70">
+        <p data-hero-fade className="eyebrow mb-5 text-xs lg:text-base text-paper/70">
           The 2026 Collection
         </p>
 
-        <h1 className="font-bold leading-[0.85] tracking-tight text-display-2xl">
+        <h1 className="font-bold leading-[0.85] tracking-tight text-[clamp(3rem,8vw,8rem)]">
           <span data-hero-line className="block overflow-hidden">
             <span className="inline-block">CRAFTED</span>
           </span>
@@ -118,11 +118,26 @@ export function Hero() {
           </span>
         </h1>
 
+        {/* Mobile-only Search Bar */}
+        <div data-hero-fade className="mt-8 flex lg:hidden items-center w-full max-w-sm rounded-full bg-white/10 p-1 backdrop-blur-md border border-white/20">
+          <div className="pl-4 pr-2">
+            <Search className="h-4 w-4 text-paper/70" />
+          </div>
+          <input 
+            type="text" 
+            placeholder="Search collection..." 
+            className="w-full bg-transparent text-paper placeholder:text-paper/50 focus:outline-none text-sm"
+          />
+          <button className="bg-accent text-ink px-4 py-2 rounded-full text-sm font-semibold hover:bg-accent/90 transition-colors">
+            Go
+          </button>
+        </div>
+
         <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
           <Link
             href="/shop"
             data-hero-fade
-            className="btn-primary bg-paper text-ink dark:bg-ink dark:text-paper"
+            className="btn-primary flex items-center justify-center gap-2 bg-paper text-ink dark:bg-ink dark:text-paper"
           >
             Shop the Collection
             <ArrowRight className="h-4 w-4" />
@@ -130,7 +145,7 @@ export function Hero() {
           <Link
             href="/product/aether-flight-1"
             data-hero-fade
-            className="text-sm font-medium uppercase tracking-wider text-paper/80 underline-offset-4 hover:underline"
+            className="text-sm font-medium uppercase tracking-wider text-paper/80 underline-offset-4 hover:underline text-center sm:text-left"
           >
             Explore the Range
           </Link>

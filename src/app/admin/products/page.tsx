@@ -178,8 +178,8 @@ export default function AdminProductsPage() {
         />
       ) : (
         <Table columns={["Image", "Name", "Category", "Price", "Stock", "Actions"]}>
-          {products.map((p) => (
-            <TableRow key={p._id}>
+          {products.map((p, index) => (
+            <TableRow key={p._id} index={index}>
               <Td style={{ width: 64 }}>
                 {p.images?.[0] ? (
                   // eslint-disable-next-line @next/next/no-img-element

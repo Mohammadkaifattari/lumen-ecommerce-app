@@ -3,15 +3,14 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
 import {
   COLORS,
-  fadeUp,
-  staggerContainer,
   STATUS,
   PageHeader,
-  Card,
+  Table,
+  TableRow,
+  Td,
   Select,
   Badge,
   EmptyState,
@@ -26,7 +25,6 @@ interface Order {
   createdAt: string;
 }
 
-/** The 4 real statuses from the Order model enum (no ghost `pending`). */
 const STATUS_OPTIONS = ["Processing", "Shipped", "Delivered", "Cancelled"];
 
 export default function AdminOrdersPage() {
@@ -76,85 +74,49 @@ export default function AdminOrdersPage() {
           message="Incoming orders will appear here."
         />
       ) : (
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          animate="show"
-          style={{ display: "flex", flexDirection: "column", gap: 12 }}
-        >
-          {orders.map((order) => (
-            <motion.div key={order._id} variants={fadeUp}>
-              <Card hover={false}>
-                {/* Top row: order id + date + total */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 12,
-                  }}
-                >
-                  <span style={{ fontFamily: "monospace", fontSize: "0.78rem", color: COLORS.textMid }}>
-                    #{order._id.slice(-8).toUpperCase()}
-                  </span>
-                  <span style={{ fontSize: "0.78rem", color: COLORS.textLow }}>
-                    {new Date(order.createdAt).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
-
-                {/* Line items */}
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+        <Table columns={["Order ID", "Date", "Items", "Total", "Status", "Action"]}>
+          {orders.map((order, index) => (
+            <TableRow key={order._id} index={index}>
+              <Td>
+                <span style={{ fontFamily: "monospace", color: COLORS.text }}>
+                  #{order._id.slice(-8).toUpperCase()}
+                </span>
+              </Td>
+              <Td style={{ color: COLORS.textLow }}>
+                {new Date(order.createdAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </Td>
+              <Td>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                   {order.items.map((item, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        fontSize: "0.85rem",
-                      }}
-                    >
-                      <span>
-                        {item.name} <span style={{ color: COLORS.textLow }}>× {item.quantity}</span>
-                      </span>
-                      <span style={{ color: COLORS.accent }}>
-                        ${(item.price * item.quantity).toLocaleString()}
-                      </span>
+                    <div key={i} style={{ fontSize: "0.8rem", color: COLORS.textMid }}>
+                      {item.quantity}x {item.name}
                     </div>
                   ))}
                 </div>
-
-                {/* Bottom row: total + status select */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    borderTop: `1px solid ${COLORS.line}`,
-                    paddingTop: 12,
-                  }}
-                >
-                  <span style={{ fontWeight: 700, fontSize: "0.95rem" }}>
-                    Total <span style={{ color: COLORS.accent }}>${order.total.toLocaleString()}</span>
-                  </span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <Badge status={order.status} />
-                    <Select
-                      value={order.status}
-                      onChange={(v) => updateStatus(order._id, v)}
-                      options={STATUS_OPTIONS}
-                      colorMap={STATUS}
-                    />
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
+              </Td>
+              <Td style={{ fontWeight: 600, color: COLORS.accent }}>
+                ${order.total.toLocaleString()}
+              </Td>
+              <Td>
+                <Badge status={order.status} />
+              </Td>
+              <Td>
+                <Select
+                  value={order.status}
+                  onChange={(v) => updateStatus(order._id, v)}
+                  options={STATUS_OPTIONS}
+                  colorMap={STATUS}
+                />
+              </Td>
+            </TableRow>
           ))}
-        </motion.div>
+        </Table>
       )}
     </div>
   );
 }
+

@@ -115,22 +115,22 @@ export default function AdminAnalyticsPage() {
               <AreaChart data={data.revenueByMonth} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.accent} stopOpacity={0.2} />
-                    <stop offset="95%" stopColor={COLORS.accent} stopOpacity={0} />
+                    <stop offset="5%" stopColor="#d4ff3f" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#d4ff3f" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1a1a1a" vertical={false} />
-                <XAxis dataKey="month" tick={{ fill: COLORS.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: COLORS.muted, fontSize: 11 }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
+                <XAxis dataKey="month" tick={{ fill: "#ffffff60", fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: "#ffffff60", fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip content={<ChartTooltip />} cursor={{ stroke: `${COLORS.accent}22`, strokeWidth: 1 }} />
                 <Area
                   type="monotone"
                   dataKey="revenue"
-                  stroke={COLORS.accent}
+                  stroke="#d4ff3f"
                   strokeWidth={2}
                   fill="url(#revenueGrad)"
                   dot={false}
-                  activeDot={{ r: 4, fill: COLORS.accent, stroke: COLORS.bg, strokeWidth: 2 }}
+                  activeDot={{ r: 4, fill: "#d4ff3f", stroke: COLORS.bg, strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>

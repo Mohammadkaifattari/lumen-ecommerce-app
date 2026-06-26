@@ -84,8 +84,8 @@ export function DashboardClient({ data }: { data: DashboardData }) {
           />
         ) : (
           <Table columns={["Order ID", "Items", "Total", "Status"]}>
-            {recentOrders.map((order) => (
-              <TableRow key={order._id}>
+            {recentOrders.map((order, index) => (
+              <TableRow key={order._id} index={index}>
                 <Td style={{ fontFamily: "monospace", color: COLORS.textMid, width: 120 }}>
                   #{order._id.toString().slice(-8).toUpperCase()}
                 </Td>

@@ -2,37 +2,32 @@
 
 /**
  * LUMEN Admin — shared design system.
- *
- * Single source of truth for the dark/lime admin UI: color tokens, spacing,
- * motion variants, and reusable primitives (Card, Table, Badge, Inputs, Modal).
- * Every admin page imports from here so the look stays consistent and premium
- * (Linear / Vercel / Raycast feel). Inline styles deliberately — Tailwind's
- * light-mode base conflicts with the admin's always-dark surface.
  */
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, type ReactNode, type CSSProperties } from "react";
 import { X } from "lucide-react";
-import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
 
 /* ----------------------------------------------------------------------------
  * Tokens
  * ------------------------------------------------------------------------- */
 export const COLORS = {
-  bg: "#0f0f0f", // app background
+  bg: "#0a0a0a", // app background
   sidebar: "#0a0a0a", // sidebar
   card: "#111111", // cards / panels
-  cardHover: "#161616", // nested hover surface
-  field: "#1a1a1a", // input background
+  cardHover: "#1a1a1a", // nested hover surface
+  field: "#111111", // input background
   line: "rgba(255,255,255,0.08)", // default border
   lineStrong: "rgba(255,255,255,0.14)",
-  text: "#fafafa", // primary text
-  textMid: "rgba(255,255,255,0.55)", // secondary
-  textLow: "rgba(255,255,255,0.35)", // tertiary / labels
-  muted: "#4d4d4d", // very low emphasis (eyebrows)
+  text: "#ffffff", // primary text
+  textMid: "rgba(255,255,255,0.6)", // secondary
+  textLow: "rgba(255,255,255,0.4)", // tertiary / labels
+  muted: "rgba(255,255,255,0.3)", // very low emphasis
   accent: "#d4ff3f", // volt lime
   accentSoft: "rgba(212,255,63,0.14)",
-  danger: "#ff5050",
+  danger: "#ef4444",
   success: "#22c55e",
+  info: "#3b82f6",
+  warning: "#eab308",
 };
 
 export const RADIUS = { sm: 8, md: 12, lg: 16, xl: 20 };
@@ -40,10 +35,10 @@ export const SPACE = { 1: 8, 2: 16, 3: 24, 4: 32 } as const;
 
 /** Single source of truth for order statuses — matches the Order model enum. */
 export const STATUS: Record<string, string> = {
-  Processing: "#3b82f6",
-  Shipped: "#8b5cf6",
-  Delivered: "#22c55e",
-  Cancelled: "#ef4444",
+  Processing: COLORS.info,
+  Shipped: COLORS.warning,
+  Delivered: COLORS.success,
+  Cancelled: COLORS.danger,
 };
 
 /* ----------------------------------------------------------------------------
@@ -74,7 +69,6 @@ export const pageFade = {
  * Primitives
  * ------------------------------------------------------------------------- */
 
-/** Page header: eyebrow + title + optional subtitle / right-aligned actions. */
 export function PageHeader({
   eyebrow,
   title,
@@ -102,7 +96,6 @@ export function PageHeader({
   );
 }
 
-/** Surface card with hover → accent border + subtle glow. */
 export function Card({
   children,
   style,
@@ -123,7 +116,7 @@ export function Card({
         padding: SPACE[3],
         position: "relative",
         overflow: "hidden",
-        transition: "border-color 0.25s ease, box-shadow 0.25s ease",
+        transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
         ...(hover
           ? { ["--tw-hover-border" as never]: COLORS.accent }
           : {}),
@@ -131,11 +124,13 @@ export function Card({
       }}
       onMouseEnter={(e) => {
         if (!hover) return;
+        e.currentTarget.style.transform = "translateY(-2px)";
         e.currentTarget.style.borderColor = `${COLORS.accent}55`;
-        e.currentTarget.style.boxShadow = `0 0 0 1px ${COLORS.accent}22, 0 8px 30px rgba(212,255,63,0.06)`;
+        e.currentTarget.style.boxShadow = `0 10px 30px rgba(0,0,0,0.5), 0 0 0 1px ${COLORS.accent}22, 0 8px 30px rgba(212,255,63,0.06)`;
       }}
       onMouseLeave={(e) => {
         if (!hover) return;
+        e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.borderColor = accent ? "rgba(212,255,63,0.25)" : COLORS.line;
         e.currentTarget.style.boxShadow = "none";
       }}
@@ -146,7 +141,6 @@ export function Card({
   );
 }
 
-/** Stat card for dashboards/analytics. */
 export function StatCard({
   label,
   value,
@@ -181,7 +175,6 @@ export function StatCard({
   );
 }
 
-/** Section label inside a card (eyebrow + title). */
 export function SectionLabel({ eyebrow, title }: { eyebrow: string; title: string }) {
   return (
     <div style={{ marginBottom: SPACE[2] }}>
@@ -193,7 +186,6 @@ export function SectionLabel({ eyebrow, title }: { eyebrow: string; title: strin
   );
 }
 
-/** Status badge pill — colored by the STATUS map. */
 export function Badge({ status }: { status: string }) {
   const color = STATUS[status] ?? COLORS.textMid;
   return (
@@ -215,7 +207,6 @@ export function Badge({ status }: { status: string }) {
   );
 }
 
-/** Buttons: primary (lime), ghost, danger. */
 export function Btn({
   children,
   onClick,
@@ -257,7 +248,6 @@ export function Btn({
   );
 }
 
-/** Controlled text input. */
 export function Input({
   value,
   onChange,
@@ -296,7 +286,6 @@ export function Input({
   );
 }
 
-/** Controlled textarea. */
 export function Textarea({
   value,
   onChange,
@@ -333,7 +322,6 @@ export function Textarea({
   );
 }
 
-/** Controlled select with colored options. */
 export function Select({
   value,
   onChange,
@@ -351,7 +339,7 @@ export function Select({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       style={{
-        background: COLORS.sidebar,
+        background: COLORS.card,
         color: color ?? COLORS.text,
         border: `1px solid ${color ?? COLORS.lineStrong}55`,
         borderRadius: 6,
@@ -362,7 +350,7 @@ export function Select({
       }}
     >
       {options.map((opt) => (
-        <option key={opt} value={opt} style={{ color: colorMap?.[opt] ?? COLORS.text }}>
+        <option key={opt} value={opt} style={{ color: colorMap?.[opt] ?? COLORS.text, background: COLORS.card }}>
           {opt}
         </option>
       ))}
@@ -370,7 +358,6 @@ export function Select({
   );
 }
 
-/** Data table with animated row stagger. Pass `columns` + render `rows`. */
 export function Table({
   columns,
   children,
@@ -379,15 +366,15 @@ export function Table({
   children: ReactNode;
 }) {
   return (
-    <div style={{ background: COLORS.card, border: `1px solid ${COLORS.line}`, borderRadius: RADIUS.lg, overflow: "hidden" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+    <div style={{ background: COLORS.card, border: `1px solid ${COLORS.line}`, borderRadius: RADIUS.lg, overflow: "hidden", width: "100%", overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
         <thead>
-          <tr style={{ borderBottom: `1px solid ${COLORS.line}` }}>
+          <tr style={{ borderBottom: `1px solid ${COLORS.line}`, background: COLORS.bg }}>
             {columns.map((h) => (
               <th
                 key={h}
                 style={{
-                  padding: "14px 20px",
+                  padding: "16px 20px",
                   textAlign: "left",
                   fontSize: "0.7rem",
                   fontWeight: 600,
@@ -409,37 +396,38 @@ export function Table({
   );
 }
 
-/** Animated table row. */
-export function TableRow({ children }: { children: ReactNode }) {
+export function TableRow({ children, index = 0 }: { children: ReactNode; index?: number }) {
+  const isEven = index % 2 === 0;
   return (
     <motion.tr
       variants={rowFade}
-      style={{ borderBottom: `1px solid ${COLORS.line}` }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
-      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+      style={{ 
+        borderBottom: `1px solid ${COLORS.line}`,
+        background: isEven ? COLORS.card : COLORS.bg,
+        transition: "background 0.2s"
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = `${COLORS.accent}11`)}
+      onMouseLeave={(e) => (e.currentTarget.style.background = isEven ? COLORS.card : COLORS.bg)}
     >
       {children}
     </motion.tr>
   );
 }
 
-/** Table cell. */
 export function Td({ children, style }: { children: ReactNode; style?: CSSProperties }) {
-  return <td style={{ padding: "14px 20px", fontSize: "0.85rem", color: COLORS.text, ...style }}>{children}</td>;
+  return <td style={{ padding: "16px 20px", fontSize: "0.85rem", color: COLORS.text, ...style }}>{children}</td>;
 }
 
-/** Empty state with icon + message + optional CTA. */
 export function EmptyState({ icon, title, message }: { icon?: ReactNode; title: string; message?: string }) {
   return (
-    <div style={{ textAlign: "center", padding: SPACE[4], color: COLORS.textMid }}>
-      {icon && <div style={{ marginBottom: SPACE[2], opacity: 0.4 }}>{icon}</div>}
+    <div style={{ textAlign: "center", padding: SPACE[4], color: COLORS.textMid, background: COLORS.card, borderRadius: RADIUS.lg, border: `1px solid ${COLORS.line}` }}>
+      {icon && <div style={{ marginBottom: SPACE[2], opacity: 0.4, display: "flex", justifyContent: "center" }}>{icon}</div>}
       <div style={{ fontSize: "1rem", fontWeight: 600, color: COLORS.text, marginBottom: 4 }}>{title}</div>
       {message && <div style={{ fontSize: "0.85rem" }}>{message}</div>}
     </div>
   );
 }
 
-/** Modal with backdrop + Esc/focus trap. */
 export function Modal({
   open,
   onClose,
@@ -453,9 +441,6 @@ export function Modal({
   children: ReactNode;
   width?: number;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  // useFocusTrap(ref, open, onClose);
-
   useEffect(() => {
     if (!open) return;
     document.body.style.overflow = "hidden";
@@ -473,10 +458,12 @@ export function Modal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
+            style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)" }}
           />
-          <div
-            ref={ref}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
             role="dialog"
             aria-modal="true"
             aria-label={title}
@@ -494,7 +481,7 @@ export function Modal({
               maxWidth: width,
               maxHeight: "90vh",
               overflowY: "auto",
-              boxShadow: "0 30px 80px rgba(0,0,0,0.5)",
+              boxShadow: "0 30px 80px rgba(0,0,0,0.8)",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: SPACE[3] }}>
@@ -509,14 +496,13 @@ export function Modal({
               </button>
             </div>
             {children}
-          </div>
+          </motion.div>
         </>
       )}
     </AnimatePresence>
   );
 }
 
-/* shared style fragments */
 const eyebrowStyle: CSSProperties = {
   fontSize: "0.65rem",
   letterSpacing: "0.2em",

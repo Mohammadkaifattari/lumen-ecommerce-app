@@ -77,8 +77,8 @@ export default function AdminUsersPage() {
         />
       ) : (
         <Table columns={["Name", "Email", "Joined", "Role"]}>
-          {users.map((user) => (
-            <TableRow key={user._id}>
+          {users.map((user, index) => (
+            <TableRow key={user._id} index={index}>
               <Td style={{ fontWeight: 500 }}>{user.name}</Td>
               <Td style={{ color: COLORS.textMid }}>{user.email}</Td>
               <Td style={{ color: COLORS.textLow }}>
