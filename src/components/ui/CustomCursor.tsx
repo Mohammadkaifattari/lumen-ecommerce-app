@@ -13,6 +13,12 @@ export function CustomCursor() {
   const reduced = usePrefersReducedMotion();
   const [variant, setVariant] = useState<CursorVariant>("default");
   const [visible, setVisible]  = useState(false);
+  const [isTouch, setIsTouch] = useState(true);
+
+  useEffect(() => {
+    const checkPointer = window.matchMedia("(pointer: fine)").matches;
+    setIsTouch(!checkPointer);
+  }, []);
 
   // Raw mouse position
   const mouseX = useMotionValue(-100);
@@ -27,7 +33,7 @@ export function CustomCursor() {
   const ringY = useSpring(mouseY, SPRING_RING);
 
   useEffect(() => {
-    if (reduced) return;
+    if (reduced || isTouch) return;
 
     const onMove = (e: MouseEvent) => {
       if (!visible) {
@@ -72,10 +78,10 @@ export function CustomCursor() {
       window.removeEventListener("mouseup",      onUp);
       window.removeEventListener("blur",         onUp);
     };
-  }, [reduced, visible, mouseX, mouseY]);
+  }, [reduced, isTouch, visible, mouseX, mouseY]);
 
   // Hide on touch / reduced motion
-  if (reduced) return null;
+  if (reduced || isTouch) return null;
 
   const isHover = variant === "hover";
   const isClick = variant === "click";
