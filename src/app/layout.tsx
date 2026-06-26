@@ -8,6 +8,7 @@ import { SearchOverlay } from "@/components/layout/SearchOverlay";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { AuthSessionProvider } from "@/components/layout/AuthSessionProvider";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 import { AdminLayoutGuard } from "@/components/layout/AdminLayoutGuard";
 import LiveChatWrapper from "@/components/chat/LiveChatWrapper";
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="font-sans antialiased">
         <AuthSessionProvider>
+          <QueryProvider>
           <ThemeProvider>
             <AdminLayoutGuard
               navbar={<Navbar />}
@@ -63,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </AdminLayoutGuard>
             <LiveChatWrapper />
           </ThemeProvider>
+          </QueryProvider>
         </AuthSessionProvider>
       </body>
     </html>
