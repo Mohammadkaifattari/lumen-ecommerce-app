@@ -56,9 +56,15 @@ export async function DELETE(
   try {
     await connectDB();
     const body = await req.json();
+    const updateData = {
+      ...body,
+      images: (body.images || []).map((src: any) =>
+        typeof src === "string" ? { src, alt: body.name } : src
+      ),
+    };
     const updated = await ProductModel.findOneAndUpdate(
       { slug: params.slug },
-      body,
+      updateData,
       { new: true }
     );
     if (!updated) {
