@@ -461,6 +461,18 @@ export function Modal({
             onClick={onClose}
             style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)" }}
           />
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 101,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "16px",
+              pointerEvents: "none",
+            }}
+          >
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -469,11 +481,7 @@ export function Modal({
             aria-modal="true"
             aria-label={title}
             style={{
-              position: "fixed",
-              left: "50%",
-              top: "50%",
-              zIndex: 101,
-              transform: "translate(-50%, -50%)",
+              pointerEvents: "auto",
               background: COLORS.card,
               border: `1px solid ${COLORS.lineStrong}`,
               borderRadius: RADIUS.xl,
@@ -498,6 +506,7 @@ export function Modal({
             </div>
             {children}
           </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
