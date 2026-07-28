@@ -6,7 +6,9 @@ import { OrderModel } from "@/models/Order";
 import { UserModel } from "@/models/User";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 export async function PATCH(
   req: NextRequest,
@@ -44,7 +46,7 @@ export async function PATCH(
     if (order.userId) {
       const user = await UserModel.findById(order.userId).lean() as any;
       if (user?.email) {
-        await resend.emails.send({
+        await getResend().emails.send({
           from: "LUMEN <onboarding@resend.dev>",
           to: user.email,
           subject: `Your order status: ${status}`,

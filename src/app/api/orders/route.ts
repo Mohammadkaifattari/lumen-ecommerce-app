@@ -5,7 +5,9 @@ import { connectDB } from "@/lib/mongodb";
 import { OrderModel } from "@/models/Order";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 export async function POST(req: Request) {
   try {
@@ -36,7 +38,7 @@ const { pusherServer } = await import('@/lib/pusher');
     const userEmail = (session.user as any).email;
     const userName = (session.user as any).name ?? "Customer";
     if (userEmail) {
-      await resend.emails.send({
+      await getResend().emails.send({
         from: "LUMEN <onboarding@resend.dev>",
         to: userEmail,
         subject: "Order Confirmed — LUMEN",

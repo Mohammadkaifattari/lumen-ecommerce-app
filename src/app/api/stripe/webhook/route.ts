@@ -4,11 +4,16 @@ import { connectDB } from "@/lib/mongodb";
 import { OrderModel } from "@/models/Order";
 import { Resend } from "resend";
 export const runtime = "nodejs";
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-04-30.basil" as any,
-});
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: "2025-04-30.basil" as any,
+  });
+}
+
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -16,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET!
