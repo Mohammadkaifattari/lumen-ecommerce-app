@@ -4,6 +4,8 @@ import { OrderModel } from "@/models/Order";
 import { ProductModel } from "@/models/Product";
 import { DashboardClient, type DashboardData } from "./_components/DashboardClient";
 
+export const dynamic = "force-dynamic";
+
 async function getStats() {
   await connectDB();
   const [totalUsers, totalOrders, totalProducts, orders] = await Promise.all([
