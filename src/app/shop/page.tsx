@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   description: "Browse the full LUMEN collection — footwear, apparel, accessories, and equipment.",
 };
 
+export const dynamic = "force-dynamic";
+
 // SearchParams must be read in a Client component, so we wrap with Suspense.
 export default async function ShopPage() {
   const products = await getAllProducts();

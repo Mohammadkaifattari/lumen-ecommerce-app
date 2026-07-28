@@ -7,6 +7,8 @@ import { ProductRow } from "@/components/home/ProductRow";
 import { Newsletter } from "@/components/home/Newsletter";
 import { getFeaturedProducts, getNewArrivals, getBestSellers } from "@/lib/products";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const featured = await getFeaturedProducts();
   const newArrivals = await getNewArrivals(4);
