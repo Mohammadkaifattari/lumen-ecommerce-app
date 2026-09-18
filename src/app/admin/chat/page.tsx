@@ -26,7 +26,9 @@ export default function AdminChatPage() {
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
   const channelsRef = useRef<Record<string, any>>({});
+  const adminChannelRef = useRef<any>(null);
 
+  // Initial room fetch
   useEffect(() => {
     fetch('/api/chat')
       .then(r => r.json())
@@ -40,6 +42,7 @@ export default function AdminChatPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Subscribe to Pusher channels for known rooms
   useEffect(() => {
     const roomIds = Object.keys(rooms);
     
@@ -75,6 +78,54 @@ export default function AdminChatPage() {
     };
   }, [rooms, activeRoom]);
 
+  // Listen to admin-channel for new chat messages (including new rooms)
+  useEffect(() => {
+    if ((session?.user as any)?.role !== 'admin') return;
+    
+    const channel = pusherClient.subscribe('admin-channel');
+    adminChannelRef.current = channel;
+    
+    channel.bind('chat-message', ({ roomId, message }: { roomId: string; message: Message }) => {
+      // Only process user messages for new room detection (admin replies already handled by room channel)
+      if (message.sender !== 'user') return;
+      
+      setRooms(prev => {
+        const existingRoom = prev[roomId];
+        if (existingRoom) {
+          // Room exists, check for duplicate
+          const exists = existingRoom.messages.some(m => m.id === message.id);
+          if (exists) return prev;
+          return {
+            ...prev,
+            [roomId]: {
+              ...existingRoom,
+              messages: [...existingRoom.messages, message],
+              unread: activeRoom === roomId ? 0 : existingRoom.unread + 1,
+            },
+          };
+        }
+        
+        // NEW ROOM - add it
+        return {
+          ...prev,
+          [roomId]: {
+            roomId,
+            messages: [message],
+            unread: activeRoom === roomId ? 0 : 1,
+          },
+        };
+      });
+    });
+
+    return () => {
+      if (adminChannelRef.current) {
+        adminChannelRef.current.unbind_all();
+        pusherClient.unsubscribe('admin-channel');
+      }
+    };
+  }, [activeRoom, session]);
+
+  // Fetch messages when switching rooms
   useEffect(() => {
     if (!activeRoom) return;
     fetch(`/api/chat/${encodeURIComponent(activeRoom)}`)

@@ -10,21 +10,24 @@ return NextResponse.json(messages);
 }
 
 export async function POST(req: NextRequest, { params }: { params: { roomId: string } }) {
-await connectDB();
-const body = await req.json();
-const msg = await MessageModel.create({
-roomId: params.roomId,
-text: body.text,
-sender: body.sender,
-time: body.time,
-});
-await pusherServer.trigger(`chat-${params.roomId}`, 'chat-message', {
+  await connectDB();
+  const body = await req.json();
+  const msg = await MessageModel.create({
+    roomId: params.roomId,
+    text: body.text,
+    sender: body.sender,
+    time: body.time,
+  });
+  await pusherServer.trigger(`chat-${params.roomId}`, 'chat-message', {
     roomId: params.roomId,
     message: { id: msg._id, text: msg.text, sender: msg.sender, time: msg.time },
   });
-  await pusherServer.trigger('admin-channel', 'chat-message', {
-    roomId: params.roomId,
-    message: { id: msg._id, text: msg.text, sender: msg.sender, time: msg.time },
-  });
+  // Only notify admin-channel for user messages (new chats or user replies)
+  if (body.sender === 'user') {
+    await pusherServer.trigger('admin-channel', 'chat-message', {
+      roomId: params.roomId,
+      message: { id: msg._id, text: msg.text, sender: msg.sender, time: msg.time },
+    });
+  }
   return NextResponse.json(msg);
 }
