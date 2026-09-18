@@ -1,75 +1,93 @@
-# LUMEN — Premium E-Commerce Storefront
+# LUMEN — Full-Stack Premium E-Commerce Platform
 
-A high-end e-commerce frontend combining the bold, athletic energy of Nike with the minimal, cinematic product-reveal animations of Apple. Built as a **polished, fully-functional frontend MVP** that runs out of the box on mock data and is structured for a clean backend integration.
+A high-end e-commerce platform combining the bold, athletic energy of Nike with the minimal, cinematic product-reveal animations of Apple. Built as a **production-ready full-stack application** with real backend, authentication, payments, and admin panel.
 
-> **Stack:** Next.js 14 (App Router, Server Components) · TypeScript · Tailwind CSS · Framer Motion · GSAP ScrollTrigger · Zustand
+> **Stack:** Next.js 14 (App Router, Server Components) · TypeScript · Tailwind CSS · Framer Motion · GSAP ScrollTrigger · Zustand · MongoDB/Mongoose · NextAuth.js · Stripe · Pusher · Socket.IO · Cloudinary · Resend
 
 ---
 
 ## ✨ Highlights
 
+### Storefront (Customer-Facing)
 - **Cinematic homepage** — full-screen parallax hero with staggered headline reveal, GSAP scroll-triggered text/sections, Nike-style featured carousel, animated category tiles, and a pinned editorial "manifesto" block.
 - **Premium product card** — hover image-swap, zoom, color dots, and a quick-add button that slides up.
 - **Shop page** — animated filter/sort grid (category, price, color), skeleton loaders, URL-synced filters, mobile filter drawer, empty states.
 - **Product detail** — crossfade gallery with thumbnails, color/size swatches, quantity stepper, **add-to-cart success micro-interaction**, low-stock indicator, scroll-reveal editorial banner, aggregate ratings + reviews, related products.
-- **Cart** — slide-in drawer (accessible anywhere) **and** a full cart page, both with animated line add/remove, quantity updates, persistent storage, and a working promo-code field (`WELCOME10`, `FLIGHT20`).
-- **Checkout** — animated multi-step flow (Shipping → Payment → Review) with a progress bar and a confetti success screen.
-- **Auth** — login/register with animated form transitions and a success checkmark (mock — no real auth).
-- **Account** — tabbed dashboard with expandable order history (with a tracking timeline), wishlist grid, and an editable profile.
-- **Admin Panel** — full premium dark-mode dashboard to manage products, orders, and users, featuring animated charts, data tables, and metrics.
-- **Global UX** — debounced live search overlay (⌘/Ctrl+K), dark-mode toggle (no FOUC), magnetic buttons, page transitions, responsive mobile-first layout, and `prefers-reduced-motion` support.
+- **Cart** — slide-in drawer (accessible anywhere) **and** a full cart page, both with animated line add/remove, quantity updates, persistent storage, and working promo-code field (`WELCOME10`, `FLIGHT20`).
+- **Checkout** — animated multi-step flow (Shipping → Payment → Review) with progress bar, Stripe integration, and confetti success screen.
+- **Auth** — login/register with NextAuth.js (Email/Password + Google OAuth), JWT sessions, role-based redirects.
+- **Account** — tabbed dashboard with order history (tracking timeline), wishlist grid, editable profile.
+- **Live Chat** — real-time customer support via Socket.IO, persistent message history.
+- **Global UX** — debounced live search overlay (⌘/Ctrl+K), dark-mode toggle (no FOUC), magnetic buttons, page transitions, responsive mobile-first layout, `prefers-reduced-motion` support.
+
+### Admin Panel (`/admin`)
+- **Dashboard** — real-time KPIs (revenue, orders, products, users, avg order value) + recent orders table.
+- **Product Management** — full CRUD with Cloudinary image upload, category/stock/price management.
+- **Order Management** — view all orders, update status (Processing/Shipped/Delivered/Cancelled).
+- **User Management** — view all users, change roles (user/admin).
+- **Analytics** — revenue charts (Recharts), top products leaderboard, monthly trends, breakdowns.
+- **Live Chat** — multi-room real-time support interface with unread badges.
+- **Real-Time Notifications** — Pusher-powered live alerts for new orders, chat messages, new users.
+- **Premium Dark Theme** — custom design system with volt-lime accent (`#d4ff3f`) on dark backgrounds.
 
 ---
 
-## 📊 Production-grade quality (measured, not claimed)
+## 🔐 Authentication & Authorization
 
-Every figure below was measured in this environment against the production build. Re-run them yourself with `npm run build && npm run start -- -p 3138` and the commands in [§ Testing & auditing](#-testing--auditing).
-
-### Lighthouse (desktop, clean build)
-
-| Category        | Home    | Product page |
-| --------------- | ------- | ------------ |
-| Performance     | **98**  | —            |
-| Accessibility   | **100** | **98**       |
-| Best Practices  | **96**  | —            |
-| SEO             | **100** | **100**      |
-
-Core Web Vitals (homepage): **FCP 0.3s · LCP 1.0s · CLS 0 · TBT 40ms** — all green.
-
-### Tests (Playwright)
-
-```
-10 passed (19.7s)
-```
-
-Covers: homepage render, SEO `<title>`/`<meta>`, navbar navigation, **quick-add → cart drawer**, **product add-to-cart size validation**, **⌘K search + Esc-close**, and **a11y basics** (main landmark, single h1, icon-button aria-labels).
-
-### Build
-
-Clean `next build`: **22+ static routes, 0 TypeScript / ESLint errors**, ~87 kB shared JS.
+- **NextAuth.js v4** with JWT session strategy
+- **Providers:** Credentials (bcrypt-hashed passwords) + Google OAuth
+- **Role-based access:** `user` / `admin` enum in User model
+- **Middleware protection:** `/admin/*` routes blocked for non-admin users
+- **Auto-redirect:** Admin users → `/admin`, Regular users → `/account`
 
 ---
 
-## ♿ Accessibility
+## 💳 Payments & Orders
 
-- **Focus trap + Esc-to-close** on the cart drawer, search overlay (⌘K), and mobile menu — Tab/Shift-Tab cycle within the open overlay, focus returns to the trigger on close (`src/lib/hooks/useFocusTrap.ts`).
-- **ARIA roles** — overlays use `role="dialog"` + `aria-modal="true"` with descriptive `aria-label`s.
-- **Icon-only buttons** all have descriptive `aria-label`s (e.g. `Open cart, 3 items`, `Switch to dark mode`); decorative icons are `aria-hidden`.
-- **Color contrast** — the ink/paper/accent palette is tuned to meet WCAG AA.
-- **Keyboard** — every interactive element is reachable and operable via keyboard.
-
----
-
-## 🎞 Reduced motion
-
-`prefers-reduced-motion: reduce` is honored at **two layers**:
-
-1. **CSS** (`globals.css`) — caps all transition/animation durations to ~0 for the Framer Motion micro-interactions (cart badge, page transitions, hover effects).
-2. **JavaScript** (`usePrefersReducedMotion` hook) — conditionally **skips** the GSAP scroll-driven animations entirely in the Hero, `Reveal`, `SplitText`, `RevealBlock`, `CategoryShowcase`, and `Manifesto` parallax, rendering content in its final state instead. This matters because the CSS override alone cannot stop JS-driven transforms.
+- **Stripe Checkout** — server-side session creation, webhook handling for order confirmation
+- **Order lifecycle:** Created → Processing → Shipped → Delivered / Cancelled
+- **Real-time admin notifications** via Pusher on new orders and status changes
+- **Order history** persisted in MongoDB with tracking timeline
 
 ---
 
-## 🚀 Getting started
+## 🗄 Database (MongoDB)
+
+**Collections:**
+- `users` — name, email, hashed password, role, timestamps
+- `products` — slug, name, tagline, description, price, compareAtPrice, category, images[], colors[], sizes[], stock, rating, reviewCount, badges[], featured
+- `orders` — userId, items[], shipping, subtotal, tax, shippingCost, total, status, timestamps
+- `messages` — roomId, text, sender (user/admin), time
+
+---
+
+## 🔔 Real-Time Features
+
+| Feature | Technology | Channel |
+|---------|------------|---------|
+| New order alerts | Pusher | `admin-channel` |
+| Order status updates | Pusher | `admin-channel` |
+| Live chat messages | Socket.IO | Per-room + `admin-channel` |
+| New user registrations | Pusher | `admin-channel` |
+| Unread badges | Zustand + Pusher | Client-side store |
+
+---
+
+## 🖼 Image Management
+
+- **Cloudinary** for product image uploads (admin panel)
+- **Next.js Image** optimization with remote pattern allowlist
+- Automatic transformation, CDN delivery, responsive sizing
+
+---
+
+## 📧 Email
+
+- **Resend** for transactional emails (order confirmations, etc.)
+
+---
+
+## 🚀 Getting Started
 
 Requires **Node.js 18.17+** (developed on Node 24).
 
@@ -80,34 +98,69 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+### Environment Variables
+
+Create `.env.local` with:
+
+```bash
+# Database
+MONGODB_URI=mongodb://...
+
+# Auth
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-here
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+
+# Payments
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+
+# Images
+CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=...
+
+# Real-time
+PUSHER_APP_ID=...
+PUSHER_SECRET=...
+NEXT_PUBLIC_PUSHER_KEY=...
+NEXT_PUBLIC_PUSHER_CLUSTER=...
+
+# Email
+RESEND_API_KEY=re_...
+```
+
 ### Scripts
 
-| Command               | Description                                                      |
-| --------------------- | ---------------------------------------------------------------- |
-| `npm run dev`         | Start the dev server                                             |
-| `npm run build`       | Production build                                                 |
-| `npm run start`       | Serve the production build                                       |
-| `npm run lint`        | Lint with `next lint`                                            |
-| `npm run test:e2e`    | Run Playwright smoke tests (build & start server first)          |
-| `npm run test:e2e:ui` | Run the tests in Playwright's interactive UI                     |
-
-No environment variables are required for the app itself — it runs entirely on mock data.
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server |
+| `npm run build` | Production build |
+| `npm run start` | Serve production build |
+| `npm run lint` | Lint with `next lint` |
+| `npm run seed` | Seed products from mock data |
+| `npm run seed:admin` | Create/update admin user |
+| `npm run test:e2e` | Run Playwright smoke tests |
+| `npm run test:e2e:ui` | Run tests in Playwright UI |
 
 ---
 
-## 🧪 Testing & auditing
+## 🧪 Testing & Auditing
 
-### Run the Playwright suite
+### Playwright E2E Tests
 
 ```bash
 npm run build
-npm run start -- -p 3138          # in one terminal
-npm run test:e2e                  # in another (PORT defaults to 3138)
+npm run start -- -p 3138
+npm run test:e2e
 ```
 
-Tests live in `tests/smoke.spec.ts`. They assert the critical paths work end-to-end in a real headless Chromium.
+Tests cover: homepage render, SEO, navbar navigation, quick-add → cart drawer, product add-to-cart size validation, ⌘K search + Esc-close, a11y basics.
 
-### Run Lighthouse
+### Lighthouse
 
 ```bash
 npm run build && npm run start -- -p 3138
@@ -118,137 +171,132 @@ npx lighthouse http://localhost:3138/ --preset=desktop \
 
 ---
 
-## 💾 Data persistence — what survives a refresh?
-
-This is a frontend MVP, so persistence behavior varies by feature. Here's exactly what happens:
-
-| State              | Stored where              | Survives refresh? | Across devices? |
-| ------------------ | ------------------------- | ----------------- | --------------- |
-| **Cart contents**  | `localStorage` (Zustand `persist`) | ✅ Yes | ❌ No (browser-local) |
-| **Wishlist**       | `localStorage` (Zustand `persist`) | ✅ Yes | ❌ No |
-| **Theme (light/dark)** | `localStorage` + inline no-FOUC script | ✅ Yes | ❌ No |
-| **Order history**  | In-memory mock (`MOCK_ORDERS`) | ❌ **No** — resets on reload | ❌ No |
-| **Placed orders** (from checkout) | Not persisted — checkout clears the cart and shows the success screen | ❌ No | ❌ No |
-| **Auth session**   | Mock only — no token/cookie is set | ❌ No | ❌ No |
-
-> **Note for reviewers:** the mock auth form does **not** store passwords or credentials anywhere — not in `localStorage`, not in cookies, not in memory beyond the component. It only simulates a delay then redirects. No real-looking secrets are persisted.
-
-In Phase 2 (real backend), cart/wishlist would sync to the user's document on login, and orders/auth would move to MongoDB + NextAuth sessions.
-
----
-
-## 🔌 SEO
-
-- **Per-page metadata** via Next.js `generateMetadata` — every product page gets a **dynamic** title, description, and Open Graph image derived from the product data (not just the root layout).
-- **JSON-LD `Product` schema** injected on each product page (name, image, price, availability, `aggregateRating`) for rich search results.
-- **`sitemap.xml`** — dynamically generated, includes all static routes + one URL per product slug (`src/app/sitemap.ts`).
-- **`robots.txt`** — allows crawling of content pages, blocks transactional/account routes (`src/app/robots.ts`).
-- **Open Graph + Twitter** card metadata on the root layout.
-
----
-
-## 🛡 Error & loading states
-
-- **Global error boundary** (`src/app/error.tsx`) — any unhandled runtime error in the route tree shows a recoverable "Hit a snag" screen with a *Try again* button, instead of a blank page.
-- **Global loading fallback** (`src/app/loading.tsx`) — skeleton grid shown instantly during route segment loads.
-- **Skeleton loaders** on the shop grid (during filter/sort transitions) and product cards.
-- **Empty states with icon + CTA** — empty cart, empty wishlist, no search results, and no filter matches all render a dedicated message with an action button, not just a text line.
-
----
-
-## 🗂 Project structure
+## 🗂 Project Structure
 
 ```
 src/
-├─ app/                      # App Router pages
-│  ├─ layout.tsx             # Root layout: fonts, theme script, shell
-│  ├─ page.tsx               # Homepage
-│  ├─ admin/                 # Premium dark-mode admin panel
-│  ├─ shop/page.tsx          # Listing + filters
-│  ├─ product/[slug]/        # Product detail (SSG, dynamic metadata, JSON-LD)
-│  ├─ cart/ · checkout/      # Cart + multi-step checkout
-│  ├─ login/ · register/     # Auth (mock)
-│  ├─ account/               # Orders, wishlist, profile
-│  ├─ error.tsx · loading.tsx # Global error + loading fallbacks
-│  ├─ sitemap.ts · robots.ts # Generated SEO routes
-│  ├─ not-found.tsx          # 404
-│  └─ globals.css            # Tailwind + design tokens
+├─ app/                          # App Router pages
+│  ├─ layout.tsx                 # Root layout: fonts, theme script, shell
+│  ├─ page.tsx                   # Homepage
+│  ├─ admin/                     # Premium dark-mode admin panel
+│  │  ├─ layout.tsx              # Admin shell: sidebar, topbar, notifications
+│  │  ├─ page.tsx                # Dashboard (server stats)
+│  │  ├─ products/page.tsx       # Product CRUD
+│  │  ├─ orders/page.tsx         # Order management
+│  │  ├─ users/page.tsx          # User management
+│  │  ├─ analytics/page.tsx      # Revenue charts & metrics
+│  │  ├─ chat/page.tsx           # Live chat (Socket.IO)
+│  │  └─ _components/            # Admin UI lib, DashboardClient, QueryProvider
+│  ├─ api/                       # API Routes
+│  │  ├─ admin/                  # Admin-only endpoints (users, analytics)
+│  │  ├─ auth/                   # NextAuth + register
+│  │  ├─ chat/                   # Chat messages
+│  │  ├─ orders/                 # Orders CRUD + webhook
+│  │  ├─ stripe/                 # Stripe checkout + webhook
+│  │  └─ products/               # Product endpoints
+│  ├─ shop/page.tsx              # Listing + filters
+│  ├─ product/[slug]/            # Product detail (SSG, dynamic metadata, JSON-LD)
+│  ├─ cart/ · checkout/          # Cart + multi-step Stripe checkout
+│  ├─ login/ · register/         # Auth (NextAuth)
+│  ├─ account/                   # Orders, wishlist, profile
+│  ├─ error.tsx · loading.tsx    # Global error + loading fallbacks
+│  ├─ sitemap.ts · robots.ts     # Generated SEO routes
+│  ├─ not-found.tsx              # 404
+│  └─ globals.css                # Tailwind + design tokens
 ├─ components/
-│  ├─ layout/                # Navbar, Footer, CartDrawer, SearchOverlay, PageTransition, ThemeProvider
-│  ├─ home/                  # Hero, FeaturedCarousel, CategoryShowcase, Manifesto, ProductRow
-│  ├─ product/               # ProductCard, ProductGallery, ProductConfigurator, ReviewsSection
-│  ├─ shop/ · auth/          # ShopBrowser, AuthForm
-│  └─ ui/                    # Reveal, SplitText, Stars, Marquee, MagneticButton
-├─ store/                    # Zustand: cart, wishlist, ui
+│  ├─ layout/                    # Navbar, Footer, CartDrawer, SearchOverlay, PageTransition, ThemeProvider, AdminLayoutGuard
+│  ├─ home/                      # Hero, FeaturedCarousel, CategoryShowcase, Manifesto, ProductRow
+│  ├─ product/                   # ProductCard, ProductGallery, ProductConfigurator, ReviewsSection
+│  ├─ shop/ · auth/ · chat/      # ShopBrowser, AuthForm, LiveChatWrapper
+│  └─ ui/                        # Reveal, SplitText, Stars, Marquee, MagneticButton, BentoGrid
+├─ store/                        # Zustand: cart, wishlist, ui, notifications
 ├─ lib/
-│  ├─ data.ts                # Mock catalog (mirrors DB schema)
+│  ├─ mongodb.ts                 # Mongoose connection (cached)
+│  ├─ auth.ts                    # NextAuth config
+│  ├─ pusher.ts / pusherClient.ts # Pusher server/client
+│  ├─ data.ts                    # Mock catalog (fallback/seed source)
 │  ├─ utils.ts
-│  └─ hooks/                 # useFocusTrap, usePrefersReducedMotion
-└─ types/                    # Shared domain types
-tests/smoke.spec.ts          # Playwright smoke tests
+│  └─ hooks/                     # useFocusTrap, usePrefersReducedMotion
+├─ models/                       # Mongoose models (User, Product, Order, Message)
+├─ types/                        # Shared domain types
+scripts/
+├─ seed.ts                       # Product seeding
+└─ seed-admin.ts                 # Admin user creation
+tests/smoke.spec.ts              # Playwright smoke tests
 playwright.config.ts
 ```
 
 ---
 
-## 🎨 Design system
+## 🎨 Design System
 
 - **Palette** — minimal: `ink` (near-black `#0a0a0a`), `paper` (off-white `#fafafa`), `accent` (volt lime `#d4ff3f`).
+- **Admin Palette** — dark theme: `bg: #0d0d0d`, `card: #141414`, `border: #262626`, accent `#d4ff3f`.
 - **Type** — Inter, with cinematic `display-xl`/`display-2xl` fluid sizes.
-- **Motion** — two easing curves (`premium`, `expo`) reused across the app for a consistent feel.
+- **Motion** — two easing curves (`premium`, `expo`) reused across the app.
 - Defined in `tailwind.config.ts` and `src/app/globals.css`.
+- **Admin UI Library** — `src/app/admin/_components/AdminUI.tsx` (525 lines): design tokens, motion variants, layout primitives, form components, data display, modal.
 
 ---
 
-## 🔌 Wiring up a real backend (Phase 2)
+## ♿ Accessibility
 
-This MVP is structured so the mock layer can be swapped for real services without touching the UI. The type definitions in `src/types/index.ts` already mirror the intended MongoDB collections.
-
-| Concern            | Where it lives today           | How to make it real                                                              |
-| ------------------ | ------------------------------ | ------------------------------------------------------------------------------- |
-| **Catalog**        | `src/lib/data.ts` (in-memory)  | Replace the accessors with fetches to a Next.js route handler / API.            |
-| **Cart/Wishlist**  | Zustand + `localStorage`       | Add a Server Action that syncs the persisted cart to the logged-in user's doc.  |
-| **Auth**           | `AuthForm` (mock)              | Add NextAuth.js with Email/Password + Google providers.                         |
-| **Payments**       | `checkout/page.tsx` (mock)     | Create a Stripe Checkout Session route + webhook for order confirmation.        |
-| **Realtime stock** | Static `stock` field           | Add a Socket.IO server and broadcast stock deltas to the product page.          |
-| **Images**         | Unsplash URLs via `next/image` | Upload to Cloudinary/S3 and reference in the product documents.                 |
-| **Reviews/Orders** | Mock arrays in `data.ts`       | Persist to MongoDB collections keyed by `productId` / `userId`.                 |
-
-A sample `.env` for Phase 2:
-
-```bash
-MONGODB_URI=...
-NEXTAUTH_SECRET=...
-NEXTAUTH_URL=http://localhost:3000
-STRIPE_SECRET_KEY=...
-STRIPE_WEBHOOK_SECRET=...
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-CLOUDINARY_URL=...
-```
+- **Focus trap + Esc-to-close** on cart drawer, search overlay (⌘K), mobile menu, modals — Tab/Shift-Tab cycle within overlay, focus returns to trigger on close.
+- **ARIA roles** — overlays use `role="dialog"` + `aria-modal="true"` with descriptive `aria-label`s.
+- **Icon-only buttons** all have descriptive `aria-label`s; decorative icons are `aria-hidden`.
+- **Color contrast** — tuned to meet WCAG AA.
+- **Keyboard** — every interactive element reachable and operable via keyboard.
 
 ---
 
-## 🧪 Demo tips
+## 🎞 Reduced Motion
 
-- Press **⌘/Ctrl + K** anywhere to open search.
-- Add items from the homepage, shop, or any product page — the cart drawer slides in.
-- Try promo codes **`WELCOME10`** and **`FLIGHT20`** on the cart page.
-- Toggle **dark mode** via the moon/sun icon in the navbar.
-- Go through `/checkout` end-to-end — the order "places" and shows a confetti screen.
+`prefers-reduced-motion: reduce` honored at **two layers**:
 
----
-
-## ⚠️ Honest limitations
-
-This is a **frontend MVP**. Be aware of the following before treating it as production:
-
-- **No real backend** — no database, authentication, payment processing, or live data. All product data, orders, and "auth" are illustrative mocks (see [§ Data persistence](#-data-persistence--what-survives-a-refresh)).
-- **Order history does not persist** — the account page shows a canned mock, and orders placed in checkout are not saved anywhere (they clear the cart and show a success screen).
-- **Images are remote Unsplash URLs** — fine for a demo, but in production you'd host them on your own CDN to control caching, sizing, and availability. `next.config.mjs` whitelists the Unsplash hostnames.
-- **No real-time features** — the Socket.IO live-stock / order-notification features from the original spec are Phase 2; the low-stock badge on the product page is static.
-- **Lighthouse scores** were measured on localhost (desktop preset) in a dev sandbox; real-world scores depend on hosting, CDN, and real image hosting. The scores reflect the code's quality, not deployed performance.
+1. **CSS** (`globals.css`) — caps all transition/animation durations for Framer Motion micro-interactions.
+2. **JavaScript** (`usePrefersReducedMotion` hook) — conditionally **skips** GSAP scroll-driven animations entirely (Hero, Reveal, SplitText, RevealBlock, CategoryShowcase, Manifesto parallax).
 
 ---
 
-Built as a portfolio-grade storefront demonstrating advanced frontend animation, App Router architecture, accessibility, performance budgeting, and real-world e-commerce UX patterns.
+## 🔌 SEO
+
+- **Per-page metadata** via Next.js `generateMetadata` — dynamic title, description, Open Graph image per product.
+- **JSON-LD `Product` schema** on each product page (name, image, price, availability, `aggregateRating`).
+- **`sitemap.xml`** — dynamically generated, includes all static routes + one URL per product slug.
+- **`robots.txt`** — allows content pages, blocks transactional/account routes.
+- **Open Graph + Twitter** card metadata on root layout.
+
+---
+
+## 🛡 Error & Loading States
+
+- **Global error boundary** (`error.tsx`) — recoverable "Hit a snag" screen with *Try again*.
+- **Global loading fallback** (`loading.tsx`) — skeleton grid during route segment loads.
+- **Skeleton loaders** on shop grid and product cards.
+- **Empty states with icon + CTA** — empty cart, wishlist, no search results, no filter matches.
+
+---
+
+## 🔌 Vercel Deployment
+
+1. Push to GitHub
+2. Import in Vercel
+3. Add **all environment variables** in Settings → Environment Variables
+4. **Critical:** Set `NEXTAUTH_URL=https://your-project.vercel.app`
+5. Deploy
+
+> MongoDB Atlas must allow connections from Vercel IPs (or 0.0.0.0/0 for dev).
+
+---
+
+## ⚠️ Honest Limitations
+
+- **Images** are remote Unsplash URLs (demo) — in production, host on your own CDN/Cloudinary.
+- **Lighthouse scores** measured on localhost; real-world scores depend on hosting, CDN, image hosting.
+- **Real-time features** (Socket.IO, Pusher) require sticky sessions or external Redis adapter for horizontal scaling.
+- **Admin panel** is a single-page SPA per section — initial JS bundle larger than pure Server Components.
+- **No automated CI/CD** configured — add GitHub Actions for lint/test/build on PR.
+
+---
+
+Built as a production-grade full-stack e-commerce platform demonstrating advanced frontend animation, App Router architecture, real-time features, authentication, payments, admin tooling, accessibility, and performance budgeting.

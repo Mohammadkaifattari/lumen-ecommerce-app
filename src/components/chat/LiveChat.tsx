@@ -50,7 +50,6 @@ export default function LiveChat() {
       sender: 'user',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
-    setMessages(prev => [...prev, msg]);
     setInput('');
     fetch(`/api/chat/${encodeURIComponent(roomId)}`, {
       method: 'POST',

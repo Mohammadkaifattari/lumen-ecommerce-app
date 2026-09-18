@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { io as socketIO } from 'socket.io-client';
+import { pusherClient } from '@/lib/pusherClient';
 import { Send } from 'lucide-react';
 import { COLORS, RADIUS, PageHeader } from '../_components/AdminUI';
 
@@ -24,8 +24,8 @@ export default function AdminChatPage() {
   const [rooms, setRooms] = useState<Record<string, ChatRoom>>({});
   const [activeRoom, setActiveRoom] = useState<string | null>(null);
   const [input, setInput] = useState('');
-  const socketRef = useRef<any>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const channelsRef = useRef<Record<string, any>>({});
 
   useEffect(() => {
     fetch('/api/chat')
@@ -41,27 +41,39 @@ export default function AdminChatPage() {
   }, []);
 
   useEffect(() => {
-    const socket = socketIO();
-    socketRef.current = socket;
-    socket.emit('join-admin');
-
-    socket.on('chat-message', ({ roomId, message }: { roomId: string; message: Message }) => {
-      setRooms(prev => {
-        const room = prev[roomId] ?? { roomId, messages: [], unread: 0 };
-        return {
-          ...prev,
-          [roomId]: {
-            ...room,
-            messages: [...room.messages, message],
-            unread: activeRoom === roomId ? 0 : room.unread + 1,
-          },
-        };
-      });
+    const roomIds = Object.keys(rooms);
+    
+    roomIds.forEach(roomId => {
+      if (!channelsRef.current[roomId]) {
+        const channel = pusherClient.subscribe(`chat-${roomId}`);
+        channelsRef.current[roomId] = channel;
+        
+        channel.bind('chat-message', ({ message }: { roomId: string; message: Message }) => {
+          setRooms(prev => {
+            const room = prev[roomId] ?? { roomId, messages: [], unread: 0 };
+            const exists = room.messages.some(m => m.id === message.id);
+            if (exists) return prev;
+            return {
+              ...prev,
+              [roomId]: {
+                ...room,
+                messages: [...room.messages, message],
+                unread: activeRoom === roomId ? 0 : room.unread + 1,
+              },
+            };
+          });
+        });
+      }
     });
 
-    return () => { socket.disconnect(); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    return () => {
+      Object.entries(channelsRef.current).forEach(([roomId, channel]) => {
+        channel.unbind_all();
+        pusherClient.unsubscribe(`chat-${roomId}`);
+      });
+      channelsRef.current = {};
+    };
+  }, [rooms, activeRoom]);
 
   useEffect(() => {
     if (!activeRoom) return;
@@ -88,14 +100,6 @@ export default function AdminChatPage() {
       sender: 'admin',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
-    socketRef.current?.emit('chat-message', { roomId: activeRoom, message: msg });
-    setRooms(prev => ({
-      ...prev,
-      [activeRoom]: {
-        ...prev[activeRoom],
-        messages: [...(prev[activeRoom]?.messages ?? []), msg],
-      },
-    }));
     setInput('');
     fetch(`/api/chat/${encodeURIComponent(activeRoom)}`, {
       method: 'POST',
